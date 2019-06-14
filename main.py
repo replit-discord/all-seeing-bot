@@ -33,6 +33,8 @@ GUILDS = [
 COMMANDS = {
     # reserved for a {command_name(str): command(func)} dictionary for importable commands
     }
+	
+COMMAND_FRAMEWORK_DONE = False
 
 client = discord.Client()
 
@@ -92,7 +94,22 @@ async def on_message(message):
 			await channel.send('Those words are not allowed!' if len(badWords) > 1 else 'That word is not allowed!')
 	
 	
-   
+	
+	# command framework
+	if content.startswith(bot_prefix) and COMMAND_FRAMEWORK_DONE:
+		full_command = content.lower()
+		command_name = full_command.split(' ')[0][prefix_length:]
+		args = content.split(' ')[1:] # preserve case
+		
+		ctx = {
+			'message': message,
+			'guild': guild,
+			'channel': channel,
+			'prefix': prefix,
+			'author': user
+		}
+		
+		COMMANDS[command](ctx, args)
 	
 	try:
 		base_duration = (await read('duration'))[guild.id]
@@ -137,6 +154,8 @@ async def on_message(message):
 				game = discord.Game(name='The bot prefix is: ' + bot_prefix)
 				await client.change_presence(activity=game)
 	content = message.content
+	
+	
 
 	if user.guild_permissions.administrator or moderator in user.roles:
 
