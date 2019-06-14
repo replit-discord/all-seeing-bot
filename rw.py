@@ -1,7 +1,9 @@
 import ast
-from encryption_tools import encode, decode
 import os
+
 from json_store_client import *
+
+from encryption_tools import encode, decode
 
 client = AsyncClient(os.environ.get('JSON_LINK'))
 

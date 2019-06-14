@@ -1,6 +1,7 @@
-from flask import Flask
+import random
 from threading import Thread
-from random import randint
+
+from flask import Flask
 
 app = Flask('')
 
@@ -11,9 +12,10 @@ def home():
 
 
 def run():
-    app.run(host='0.0.0.0', port=randint(2000, 9000))
+    app.run(host='0.0.0.0', port=random.randint(2000, 9000))
 
 
 def keep_alive():
+    # print('>keep_alive')
     t = Thread(target=run)
     t.start()
