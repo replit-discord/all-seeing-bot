@@ -1,26 +1,16 @@
 import discord
 import os
 import asyncio
-import traceback
 import keep_alive
-import asyncer
-from flask import Flask
-from threading import Thread
-import ast
-import time
-import base64
 from findTime import findTime
-from encryption_tools import encode, decode
 from rw import read, write
 from cmdDict import cmdDict
-from commands import data_tweaking
 from ignoredChars import ignoredChars
-from phrase_spam import is_repeating
 from json_store_client import *
 jsonclient = AsyncClient(os.environ.get('JSON_LINK'))
 
 key = os.environ.get('KEY')
-thing = encode(key, '{}')
+# thing = encode(key, '{}')
 
 keyList = [
     'banWords',
@@ -45,9 +35,6 @@ async def on_ready():
 @client.event
 async def on_message(message):
     user = message.author
-
-
-
     safe = False
     guild = message.guild
     try:
@@ -98,7 +85,7 @@ async def on_message(message):
             pass
         
         
-        if guild.id == 437048931827056642and user.guild_permissions.administrator or user.id == 487258918465306634:
+        if guild.id == 437048931827056642 and user.guild_permissions.administrator or user.id == 487258918465306634:
             if content.startswith(bot_prefix):
                 if content[prefix_length:].startswith('eval'):
                     content = content.replace(' ', '|', 1).split('|')
