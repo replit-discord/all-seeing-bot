@@ -28,8 +28,6 @@ async def read(src, lEval=True, decrypt=True):
 
 async def write(src, value, encrypt=True):
     if encrypt:
-        with open(src, 'w') as f:
-            await client.store(src, encode(key, str(value)))
+        await client.store(src, encode(key, str(value)))
     else:
-        with open(src, 'w') as f:
-            await client.store(src, str(value))
+        await client.store(src, str(value))
