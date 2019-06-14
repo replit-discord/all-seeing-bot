@@ -2,9 +2,11 @@ import ast
 from encryption_tools import encode, decode
 import os
 from json_store_client import *
+
 client = AsyncClient(os.environ.get('JSON_LINK'))
 
 key = os.environ.get('KEY')
+
 
 async def read(src, lEval=True, decrypt=True):
     if decrypt:
@@ -16,12 +18,13 @@ async def read(src, lEval=True, decrypt=True):
         return value
     else:
         data = await client.retrieve(src)
-    
+
         if lEval:
             value = ast.literal_eval(data)
         else:
             value = str(data)
         return value
+
 
 async def write(src, value, encrypt=True):
     if encrypt:

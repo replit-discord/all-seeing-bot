@@ -4,7 +4,8 @@ timeList = [
     's',
     'w',
     'mo'
-]
+    ]
+
 
 def findTime(string):
     global timeList

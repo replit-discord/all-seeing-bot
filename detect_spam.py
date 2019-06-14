@@ -9,6 +9,3 @@ from threading import Thread
 import ast
 from encryption_tools import encode, decode
 from rw import read, write
-
-
-
