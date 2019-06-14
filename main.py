@@ -2,6 +2,7 @@ import discord
 import os
 import asyncio
 import keep_alive
+import commands
 from findTime import findTime
 from rw import read, write
 from cmdDict import cmdDict
@@ -14,25 +15,26 @@ key = os.environ.get('KEY')
 # thing = encode(key, '{}')
 
 keyList = [
-    'banWords',
-    'banEmojis',
-    'spamChart'
-    ]
+	'banWords',
+	'banEmojis',
+	'spamChart'
+	]
 
 # Constants:
 INITIAL_BOT_PREFIX = '?'
 
 ADMINS = [
-    487258918465306634
-    ]
+	487258918465306634
+	]
 
 GUILDS = [
-    437048931827056642
-    ]
+	437048931827056642
+	]
 
+# reserved for a {command_name(str): command(func)} dictionary for importable commands
 COMMANDS = {
-    # reserved for a {command_name(str): command(func)} dictionary for importable commands
-    }
+	'eval': commands.evaluate
+	}
 	
 COMMAND_FRAMEWORK_DONE = False
 
@@ -41,20 +43,20 @@ client = discord.Client()
 
 @client.event
 async def on_ready():
-    current_prefix = await read('bot_prefix', None)
+	current_prefix = await read('bot_prefix', None)
 
-    if not current_prefix:  # prefix hasn't been set before, new db
-        await write('bot_prefix', INITAL_BOT_PREFIX)
+	if not current_prefix:	# prefix hasn't been set before, new db
+		await write('bot_prefix', INITAL_BOT_PREFIX)
 
-    game = discord.Game(name='The bot prefix is: ' + current_prefix)
-    await client.change_presence(activity=game)
+	game = discord.Game(name='The bot prefix is: ' + current_prefix)
+	await client.change_presence(activity=game)
 
-    for a in keyList:
-        if not read(a, None):
-            await write(a, {}, False)
+	for a in keyList:
+		if not read(a, None):
+			await write(a, {}, False)
 
-    print("I'm in")
-    print(client.user)
+	print("I'm in")
+	print(client.user)
 
 
 @client.event
@@ -92,10 +94,12 @@ async def on_message(message):
 		if len(badWords) >= 1:
 			await message.delete()
 			await channel.send('Those words are not allowed!' if len(badWords) > 1 else 'That word is not allowed!')
+			return
 	
 	
 	
 	# command framework
+	
 	if content.startswith(bot_prefix) and COMMAND_FRAMEWORK_DONE:
 		full_command = content.lower()
 		command_name = full_command.split(' ')[0][prefix_length:]
@@ -109,7 +113,14 @@ async def on_message(message):
 			'author': user
 		}
 		
-		COMMANDS[command](ctx, args)
+		command_func = COMMANDS.get(command)
+		
+		if command_func:
+			await command_func(ctx, args)
+			return
+		else:
+			await channel.send('`command not found`')
+			return
 	
 	try:
 		base_duration = (await read('duration'))[guild.id]
@@ -136,7 +147,7 @@ async def on_message(message):
 		await channel.send('No muted role set!')
 		pass
 
-	if guild.id in guilds and user.guild_permissions.administrator or user.id in ADMINS:
+	if guild.id in GUILDS and user.guild_permissions.administrator or user.id in ADMINS:
 		if content.startswith(bot_prefix):
 			if content[prefix_length:].startswith('eval'):
 				content = content.replace(' ', '|', 1).split('|')
@@ -144,7 +155,7 @@ async def on_message(message):
 					await channel.send(eval(content[1]))
 				except discord.errors.HTTPException:
 					await channel.send('Task completed')
-	if guild.id in guilds and user.guild_permissions.administrator:
+	if guild.id in GUILDS and user.guild_permissions.administrator:
 
 		if content.startswith(bot_prefix):
 			if content[prefix_length:].startswith('prefix'):
@@ -378,11 +389,11 @@ async def on_message(message):
 
 @client.event
 async def on_reaction_add(reaction, user):
-    banEmojis = await read('banEmojis', True, False)
-    guild = reaction.message.guild
-    if str(reaction) in banEmojis[guild.id]:
-        await reaction.remove(user)
-        await reaction.message.channel.send(f'<@!{str(user.id)}> That reaction is banned!')
+	banEmojis = await read('banEmojis', True, False)
+	guild = reaction.message.guild
+	if str(reaction) in banEmojis[guild.id]:
+		await reaction.remove(user)
+		await reaction.message.channel.send(f'<@!{str(user.id)}> That reaction is banned!')
 
 
 keep_alive.keep_alive()
