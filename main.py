@@ -23,6 +23,19 @@ key = os.environ.get('KEY')
 client = discord.Client()
 
 
+async def log(text, guild, title='Automatic'):
+
+	log_embed = discord.Embed(
+		title=title,
+		description=text,
+		color=0x00e0f5
+	)
+	log_dict = await read('al')
+	action_log_id = log_dict[guild.id]
+	log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
+	await log_channel.send(embed=log_embed)
+
+
 @client.event
 async def on_ready():
 	await write('bot_prefix', '?')
@@ -439,12 +452,10 @@ async def checkBan():
 			print(f'user {a[1]} not found')
 			return
 		print('unbanning')
-		log_dict = await read('al')
-		action_log_id = log_dict[guild.id]
-		log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
 		username = user.display_name
-		await log_channel.send(
-			f'`{username}` has been unbanned because his/her time is up'
+		await log(
+			f'`{username}` has been unbanned because his/her time is up',
+			guild
 		)
 		await guild.unban(user=user, reason='User\'s time was up')
 		del banList[a[0]][a[1]]
@@ -459,7 +470,6 @@ async def checkMute():
 	for guild_list in mute_list:
 		for userId in mute_list[guild_list]:
 			date = mute_list[guild_list][userId]
-			date = datetime.datetime.strptime(date, "%Y-%m-%w-%W %H:%M:%S")
 			if datetime.datetime.now() >= date:
 				del_list.append([guild_list, userId])
 
@@ -471,12 +481,10 @@ async def checkMute():
 		else:
 			user = guild.get_member(a[1])
 			print('unmuting')
-			log_dict = await read('al')
-			action_log_id = log_dict[guild.id]
-			log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
 			username = user.display_name
-			await log_channel.send(
-				f'`{username}` has been unmuted because his/her time is up'
+			await log(
+				f'`{username}` has been unmuted because his/her time is up',
+				guild
 			)
 			del mute_list[a[0]][a[1]]
 			await user.remove_roles(await get_muted_role(guild))
