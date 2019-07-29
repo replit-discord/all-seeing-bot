@@ -29,13 +29,14 @@ helpMsg = discord.Embed(title='Customization', description='''
 ''', color=0xd82222)
 
 
-async def log(text, msg, title='Moderation'):
+async def log(text, msg, title='Moderation', footer=''):
 	guild = msg.guild
 	log_embed = discord.Embed(
 		title=title,
 		description=text,
 		color=0xd82222
 	)
+	log_embed.set_footer(text=footer)
 	log_dict = await read('al')
 	action_log_id = log_dict[guild.id]
 	log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
@@ -235,8 +236,6 @@ async def unban(args, msg):
 					break
 			log_dict = await read('al')
 			if guild.id in log_dict:
-				action_log_id = log_dict[guild.id]
-				log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
 				log_action = True
 			else:
 				log_action = False
@@ -298,7 +297,7 @@ async def kick(args, msg):
 				await log(f'@{disp_name} kicked @{kickname} for **reason:** `{args[1]}')
 				await guild.kick(mentions[0], reason=args[1])
 			await channel.send(f'{kickname} has been kicked')
-			
+
 		else:
 			await channel.send(
 				'Invalid ammount of args. Example command: `kick @jon#2342 lol`'
@@ -490,6 +489,40 @@ async def warn(args, msg):
 			await dm_channel.send(
 				f'You have been warned on {guild.name} for **reason:** {reason}'
 			)
+
+			warn_dict = await read('warn_list')
+			if guild.id in warn_dict:
+				guild_warn_dict = warn_dict[guild.id]
+			else:
+				guild_warn_dict = {'instances': 0, 'cases': {}}
+			date = datetime.datetime.now()
+			date_str = date.strftime("%m-%d-%Y")
+			if user.id in guild_warn_dict:
+				user_warns = guild_warn_dict[user.id]
+			else:
+				user_warns = {}
+			warn_id = guild_warn_dict['instances'] + 1
+			warn_info = {
+				'moderator': author.id,
+				'reason': reason,
+				'date': date_str
+			}
+			user_warns[warn_id] = warn_info
+			guild_warn_dict[user.id] = user_warns
+			guild_warn_dict['instances'] += 1
+			cases = guild_warn_dict['cases']
+			cases[warn_id] = f'{user.id}/{warn_id}'
+			guild_warn_dict['cases'] = cases
+			warn_dict[guild.id] = guild_warn_dict
+			print(warn_dict)
+			await write('warn_list', warn_dict)
+			await log(
+				f'<@{author.id}> warned <@{user.id}> for **reason**:  `{reason}`',
+				msg,
+				'Warn',
+				f'{date_str} | Case #{warn_id}'
+			)
+
 		elif len(args) == 1:
 			await channel.send('You need to have a reason to warn someone!')
 		else:
@@ -498,3 +531,132 @@ async def warn(args, msg):
 			)
 	else:
 		await channel.send('You do not have permission to do that!')
+
+
+async def get_warns(args, msg):
+	guild = msg.guild
+	author = msg.author
+	channel = msg.channel
+	trusted = await checkTrust(guild, author)
+	if trusted or guild.permission.administrator:
+		warn_dict = await read('warn_list')
+
+		if guild.id in warn_dict:
+			guild_warn_dict = warn_dict[guild.id]
+			if len(msg.mentions) >= 1:
+				user = msg.mentions[0]
+
+			else:
+				try:
+					user = guild.get_member(int(args[0]))
+				except ValueError:
+					user = guild.get_member_named(args[0])
+			if user != "NoneType":
+				if user.id in guild_warn_dict:
+					user_warns = guild_warn_dict[user.id]
+
+					embed = discord.Embed(title=f'{user.display_name}', color=0xfffc00)
+					embed.add_field(name=f'Warnings:', value='\u200B', inline=False)
+					for a in user_warns:
+						warn = user_warns[a]
+						reason = warn['reason']
+						date = warn['date']
+						moderator = warn['moderator']
+						embed.add_field(
+
+							name=f'Case: {a}',
+							value=reason,
+							inline=True
+						)
+						embed.add_field(
+							name=date,
+							value=f'warned by: <@{moderator}>',
+							inline=True
+						)
+						embed.add_field(name='\u200B', value='\u200B', inline=False)
+					embed.remove_field(-1)
+					await channel.send(embed=embed)
+				else:
+					await channel.send('User has no warns!')
+			else:
+				await channel.send("Invalid user")
+		else:
+			await channel.send('Your server has no warns yet!')
+	else:
+		await channel.send('You do not have permission to use this command!')
+	pass  # O wait i have to make warns make a dictionary first
+
+
+async def remove_warn(args, msg):
+	guild = msg.guild
+	author = msg.author
+	channel = msg.channel
+	while '' in args:
+		args.remove('')
+	if author.guild_permissions.administrator:
+		warn_dict = await read('warn_list')
+		if guild.id in warn_dict:
+			guild_warn_dict = warn_dict[guild.id]
+			try:
+				case_number = int(args[0])
+				cases = guild_warn_dict['cases']
+
+				if case_number in cases:
+					path = cases[case_number]
+					path = path.split('/')
+					print(path)
+					user = guild.get_member(int(path[0]))
+					embed = discord.Embed(title=f'{user.display_name}', color=0xfffc00)
+					embed.add_field(name=f'Warning:', value='\u200B', inline=False)
+
+					warn = guild_warn_dict[int(path[0])][int(path[1])]
+					reason = warn['reason']
+					date = warn['date']
+					moderator = warn['moderator']
+					embed.add_field(
+
+						name=f'Case: {path[1]}',
+						value=reason,
+						inline=True
+					)
+					embed.add_field(
+						name=date,
+						value=f'warned by: <@{moderator}>',
+						inline=True
+					)
+					embed.set_footer(text='This message has a 60s timeout.')
+					check_msg = await channel.send(
+						'Are you sure that you would like to remove this warning? You cannot undo this!:'
+						, embed=embed)
+					await check_msg.add_reaction('✅')
+					await check_msg.add_reaction('❌')
+					client = discord.Client()
+
+
+					def check(reaction, user):
+						global user_reply
+						print(str(reaction.emoji))
+						if str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌':
+							goot_emoji = True
+							user_reply = str(reaction.emoji)
+						else:
+							good_emoji = False
+						return user == author and good_emoji and reaction.message == check_msg
+
+					try:
+						reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
+					except asyncio.TimeoutError:
+						await channel.send('Warning will not be deleted.')
+					else:
+						if user_reply == '✅':
+							del warn_dict[guild.id][user.id][path[1]]
+							await write('warn_list', warn_dict)
+							await channel.send('Warning has been deleted.')
+						else:
+							await channel.send('Warning will not be deleted.')
+				else:
+					await channel.send('That instance doesn\'t exist!')
+			except ValueError:
+				await channel.send(f'{args[0]} is not a valid number!')
+		else:
+			await channel.send('There are no warnings in your guild!')

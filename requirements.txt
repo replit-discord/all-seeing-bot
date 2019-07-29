@@ -2,3 +2,5 @@ discord.py
 flask
 asyncio
 json-store-client
+emoji
+cryptography

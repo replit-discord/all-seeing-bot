@@ -1,18 +1,36 @@
 import base64
+import os
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-def encode(key, clear):
-    enc = []
-    for i in range(len(clear)):
-        key_c = key[i % len(key)]
-        enc_c = chr((ord(clear[i]) + ord(key_c)) % 256)
-        enc.append(enc_c)
-    return base64.urlsafe_b64encode("".join(enc).encode()).decode()
+def prep(key, string):
+	password = key.encode()
 
-def decode(key, enc):
-    dec = []
-    enc = base64.urlsafe_b64decode(enc).decode()
-    for i in range(len(enc)):
-        key_c = key[i % len(key)]
-        dec_c = chr((256 + ord(enc[i]) - ord(key_c)) % 256)
-        dec.append(dec_c)
-    return "".join(dec)
+	salt = os.environ.get('SALT').encode()
+
+	kdf = PBKDF2HMAC(
+		algorithm=hashes.SHA256(),
+		length=32,
+		salt=salt,
+		iterations=100000,
+		backend=default_backend()
+	)
+	KEY = base64.urlsafe_b64encode(kdf.derive(password))
+	f = Fernet(KEY)
+	string = bytes(string, 'utf-8')
+	return f, string	
+
+
+def encode(key, string):
+
+	key, string = prep(key, string)
+
+	return key.encrypt(string).decode()
+
+
+def decode(key, string):
+	key, string = prep(key, string)
+
+	return key.decrypt(string).decode()
