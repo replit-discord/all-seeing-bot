@@ -172,7 +172,10 @@ async def on_message(message):
 			if cmd in cmdDict:
 				args = content[prefix_length + len(cmd) + 1:].split(' ')
 				print(content[prefix_length + len(cmd) + 1:].split(' '))
-				await cmdDict[cmd](args, message)
+				try:
+					await cmdDict[cmd](args, message, client)
+				except TypeError:
+					await cmdDict[cmd](args, message)
 		if user.guild_permissions.administrator or moderator in user.roles:
 
 			if content.startswith(bot_prefix):
@@ -231,33 +234,42 @@ async def on_message(message):
 				for char in ignoredChars:
 						content = content.replace(char, '')
 
-				try:
-					phrase_limit = (await read('pl'))[guild.id]
-				except KeyError:
-					await cmdDict['phraselimit'](['5'], message)
-					phrase_limit = dd
+
+				full_phrase_limit = (await read('pl'))
+				if guild.id in full_phrase_limit:
+					phrase_limit = full_phrase_limit[guild.id]
+				else:
+					phrase_limit = 5
+					full_phrase_limit[guild.id] = 5
+					await write('pl', full_phrase_limit)
 				banned_word = False
 
 				for a in banWords:
 						a = a.lower()
 						if ' ' + a + ' ' in content or content.startswith(a) or content.endswith(a):
 							banned_word = True
-				try:
-					mention_limit = (await read('ml'))[guild.id]
-				except KeyError:
-					await cmdDict['mentionlimit'](['4'], message)
-					mention_limit = (await read('ml'))[guild.id]
+				full_mention_limit = (await read('ml'))
+				if guild.id in full_mention_limit:
+					mention_limit = full_mention_limit[guild.id]
+				else:
+					mention_limit = 5
+					full_mention_limit[guild.id] = 5
+					await write('ml', full_mention_limit)
+
 				if len(message.mentions) > mention_limit:
 					mention_spam = True
 				else:
 					mention_spam = False
-				try:
-					emoji_limit = (await read('em'))[guild.id]
-				except KeyError:
-					await cmdDict['emojimax'](['30'], message)
-					emoji_limit = (await read('em'))[guild.id]
+				full_emoji_limit = await read('em')
+				if guild.id in full_emoji_limit:
+					emoji_limit = full_emoji_limit[guild.id]
+				else:
+					emoji_limit = 30
+					full_emoji_limit[guild.id] = emoji_limit
+					await write('em', full_emoji_limit)
 				if emoji_count(message.content) > emoji_limit:
 					emoji_max = True
+
 				else:
 					emoji_max = False
 				has_link = any(url in message.content for url in [
@@ -297,33 +309,49 @@ async def on_message(message):
 
 				guildId = guild.id
 				userId = user.id
-				try:
-					offenseLimit = (await read('ol'))[guild.id]
-				except KeyError:
-					await cmdDict['offenselimit'](['5'], message)
-					offenseLimit = (await read('ol'))[guild.id]
+				full_offenseLimit = await read('ol')
+				if guild.id in full_offenseLimit:
+					offenseLimit = full_offenseLimit[guild.id]
+				else:
+					offenseLimit = 5
+					full_offenseLimit[guild.id] = 5
+					await write('ol', full_offenseLimit)
 
 				mute_dict = await read('mute_dict')
 				if guild.id in mute_dict:
 					guild_mute_dict = (mute_dict)[guild.id]
 				else:
 					mute_dict[guild.id] = {}
+					guild_mute_dict = {}
 					await write('mute_dict', mute_dict)
 
 				if user.id in guild_mute_dict:
+					full_mute_increment = await read('mi')
+					if guild.id in full_mute_increment:
+						gmi = full_mute_increment
+					else:
+						gmi = 2
+						full_mute_increment[guild.id] = gmi
+						await write('mi', full_mute_increment)
 					offenses = guild_mute_dict[user.id]['Offenses']
-					try:
-						mute_increment = (await read('mi'))[guild.id] * offenses + 1
-					except KeyError:
-						await cmdDict['muteincrement'](['2'], message)
-						mute_increment = (await read('mi'))[guild.id] * offenses + 1
 
+					mute_increment = (gmi * offenses + 1)
 				else:
-					try:
-						mute_increment = (await read('mi'))[guild.id] + 1
-					except KeyError:
-						await cmdDict['muteincrement'](['2'], message)
-						mute_increment = (await read('mi'))[guild.id] + 1
+					full_mute_increment = await read('mi')
+					if guild.id in full_mute_increment:
+						gmi = full_mute_increment[guild.id]
+					else:
+						gmi = 2
+						full_mute_increment[guild.id] = gmi
+						await write('mi', full_mute_increment)
+					offenses = 0
+					mute_increment = (gmi * offenses + 1)
+					if guild.id in mute_dict:
+						guild_mute_dict = (mute_dict)[guild.id]
+					else:
+						mute_dict[guild.id] = {}
+						await write('mute_dict', mute_dict)
+
 				mute_duration = base_duration * mute_increment
 				try:
 					mri = (await read('mute-role-id'))[guild.id]
