@@ -538,7 +538,7 @@ async def get_warns(args, msg):
 	author = msg.author
 	channel = msg.channel
 	trusted = await checkTrust(guild, author)
-	if trusted or guild.permission.administrator:
+	if trusted or author.guild_permissions.administrator:
 		warn_dict = await read('warn_list')
 
 		if guild.id in warn_dict:
@@ -587,7 +587,7 @@ async def get_warns(args, msg):
 	pass  # O wait i have to make warns make a dictionary first
 
 
-async def remove_warn(args, msg):
+async def remove_warn(args, msg, client):
 	guild = msg.guild
 	author = msg.author
 	channel = msg.channel
@@ -630,26 +630,28 @@ async def remove_warn(args, msg):
 						, embed=embed)
 					await check_msg.add_reaction('✅')
 					await check_msg.add_reaction('❌')
-					client = discord.Client()
+
 
 
 					def check(reaction, user):
 						global user_reply
 						print(str(reaction.emoji))
 						if str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌':
-							goot_emoji = True
+							good_emoji = True
 							user_reply = str(reaction.emoji)
 						else:
 							good_emoji = False
-						return user == author and good_emoji and reaction.message == check_msg
+						return user == author and good_emoji and reaction.message.id == check_msg.id
 
 					try:
 						reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
 					except asyncio.TimeoutError:
-						await channel.send('Warning will not be deleted.')
+						await channel.send('Message timed out.')
 					else:
 						if user_reply == '✅':
-							del warn_dict[guild.id][user.id][path[1]]
+							print(path[1])
+							print(warn_dict[guild.id][user.id][int(path[1])])
+							del warn_dict[guild.id][user.id][int(path[1])]
 							await write('warn_list', warn_dict)
 							await channel.send('Warning has been deleted.')
 						else:
