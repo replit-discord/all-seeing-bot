@@ -32,30 +32,32 @@ async def log(text, guild, title='Automatic'):
 	action_log_id = log_dict[guild.id]
 	log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
 	await log_channel.send(embed=log_embed)
-do_background_tasks = True
+do_setup = True
 
 
 @client.event
 async def on_ready():
+	global do_setup
+	if do_setup:
+		await write('bot_prefix', '?')
+		await write('spamChart', {})
 
-	await write('bot_prefix', '?')
-	await write('spamChart', {})
+		print(repr(await read('bot_prefix', False, True)))
+		await client.user.edit(username='ASB')
+		bot_prefix = await read('bot_prefix', False)
+		game = discord.Game(name='The bot prefix is: ' + bot_prefix)
 
-	print(repr(await read('bot_prefix', False, True)))
-	await client.user.edit(username='ASB')
-	bot_prefix = await read('bot_prefix', False)
-	game = discord.Game(name='The bot prefix is: ' + bot_prefix)
+		await client.change_presence(activity=game)
+		print("I'm in")
+		print(client.user)
+		print('settings up background tasks')
+		loop = client.loop
 
-	await client.change_presence(activity=game)
-	print("I'm in")
-	print(client.user)
-	print('settings up background tasks')
-	loop = client.loop
-
-	if do_background_tasks:
-		task1 = loop.create_task(bgTasks())
-	print(len({t._coro.__qualname__ for t in asyncio.Task.all_tasks()}))
-	await task1
+		
+			task1 = loop.create_task(bgTasks())
+		print(len({t._coro.__qualname__ for t in asyncio.Task.all_tasks()}))
+		await task1
+	do_setup = False
 
 
 @client.event
@@ -550,12 +552,11 @@ async def checkMute():
 
 
 async def bgTasks():
-	global do_background_tasks
-	do_background_tasks = False
+
 	while True:
 		await checkMute()
 		await checkBan()
-		await asyncio.sleep(1000)
+		await asyncio.sleep(1)
 keep_alive.keep_alive()
 
 
