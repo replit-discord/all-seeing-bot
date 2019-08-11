@@ -3,6 +3,7 @@ import discord
 import os
 import asyncio
 import keep_alive
+import sys
 from rw import read, write
 from cmdDict import cmdDict
 from ignoredChars import ignoredChars
@@ -31,13 +32,14 @@ async def log(text, guild, title='Automatic'):
 	action_log_id = log_dict[guild.id]
 	log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
 	await log_channel.send(embed=log_embed)
+do_background_tasks = True
 
 
 @client.event
 async def on_ready():
+
 	await write('bot_prefix', '?')
 	await write('spamChart', {})
-
 
 	print(repr(await read('bot_prefix', False, True)))
 	await client.user.edit(username='ASB')
@@ -49,7 +51,10 @@ async def on_ready():
 	print(client.user)
 	print('settings up background tasks')
 	loop = client.loop
-	task1 = loop.create_task(bgTasks())
+
+	if do_background_tasks:
+		task1 = loop.create_task(bgTasks())
+	print(len({t._coro.__qualname__ for t in asyncio.Task.all_tasks()}))
 	await task1
 
 
@@ -90,8 +95,10 @@ async def on_member_join(member):
 
 @client.event
 async def on_message(message):
+
 	private = str(message.channel.type) == 'private'
 	if not private:
+		
 		user = message.author
 		sc = await read('spamChart')
 		try:
@@ -125,6 +132,9 @@ async def on_message(message):
 		prefix_length = len(bot_prefix)
 		deleted = False
 	if message.author != client.user and not private:
+		beforedate = datetime.datetime.now()
+
+
 		try:
 			base_duration = (await read('duration'))[guild.id]
 		except:
@@ -149,8 +159,10 @@ async def on_message(message):
 		except KeyError:
 			mri = (await get_muted_role(guild)).id
 
-		if user.id == 487258918465306634:
+		if user.id == 487258918465306634 or user.id == 527937324865290260:
 			if content.startswith(bot_prefix):
+				if content[prefix_length:].startswith('killall'):
+					sys.exit()
 				if content[prefix_length:].startswith('eval'):
 					content = content.replace(' ', '|', 1).split('|')
 					try:
@@ -162,7 +174,7 @@ async def on_message(message):
 			if content.startswith(bot_prefix):
 				if content[prefix_length:].startswith('prefix'):
 					await write('bot_prefix', str(content[prefix_length + 7:]))
-					await channel.send('The Bot prefix is now ' + str(content[prefix_length+7:]))
+					await channel.send('The Bot prefix is now ' + str(content[prefix_length + 7:]))
 					bot_prefix = await read('bot_prefix', False)
 					game = discord.Game(name='The bot prefix is: ' + bot_prefix)
 					await client.change_presence(activity=game)
@@ -199,7 +211,7 @@ async def on_message(message):
 						await write('banWords', fullBanWords, False)
 						await channel.send('`' + content[1] + '` Has been unbanned')
 					except:
-						await channel.send(content[1].lower() + ' is not in the banlist.')
+						await channel.send(f'`{content[1].lower()}` is not in the banlist.')
 					safe = True
 				elif content[prefix_length:].lower().startswith('banreaction'):
 					content = content.replace(' ', '|\||\``\|', 1).split('|\||\``\|')
@@ -222,7 +234,8 @@ async def on_message(message):
 						await channel.send('An unknown error occured.')
 
 		content = message.content.lower()
-
+		afterdate = datetime.datetime.now()
+		#await message.channel.send(str(afterdate-beforedate))
 		#
 		# MESSAGE SPAM/ BANNED CONTENT DETECTING
 		#
@@ -311,9 +324,9 @@ async def on_message(message):
 				userId = user.id
 				full_offenseLimit = await read('ol')
 				if guild.id in full_offenseLimit:
-					offenseLimit = full_offenseLimit[guild.id]
+					offenseLimit = full_offenseLimit[guild.id] + 1
 				else:
-					offenseLimit = 5
+					offenseLimit = 6
 					full_offenseLimit[guild.id] = 5
 					await write('ol', full_offenseLimit)
 
@@ -328,7 +341,7 @@ async def on_message(message):
 				if user.id in guild_mute_dict:
 					full_mute_increment = await read('mi')
 					if guild.id in full_mute_increment:
-						gmi = full_mute_increment
+						gmi = full_mute_increment[guild.id]
 					else:
 						gmi = 2
 						full_mute_increment[guild.id] = gmi
@@ -416,11 +429,14 @@ async def on_message(message):
 						if spamChart[guildId][userId] <= 0:
 							del spamChart[guildId][userId]
 					else:
-						spamChart[guildId][userId] -= 1
+						try:
+							spamChart[guildId][userId] -= 1
+						except KeyError:
+							pass
 						if spamChart[guildId][userId] <= 0:
 							del spamChart[guildId][userId]
 					await write('spamChart', spamChart)
-				"""
+				#
 				newline = '''
 		'''
 
@@ -428,28 +444,31 @@ async def on_message(message):
 
 					yesAnnotherThing = str(repr(content).encode('ascii'))
 
-					if not content.replace(newline, '\n') in (yesAnnotherThing).replace('\\n', '\n'):
+					if content not in (yesAnnotherThing).replace('\\n', '\n'):
 						await message.delete()
 						await channel.send(
 			f"Illegal character detected in <@!{user.id}>'s message."
 		)
 				except UnicodeEncodeError:
 					pass
-				"""
-				nextMsg = await client.wait_for(
-					'message',
-					check=lambda message: message.author == user
-				)
+				#
+				try:
+					nextMsg = await client.wait_for(
+						'message',
+						check=lambda message: message.author == user, timeout=5.0
+					)
 
-				content = str(content + nextMsg.content)
-				for char in ignoredChars:
-						content = content.replace(char, '')
-				for a in banWords:
-					a = a.lower()
-					if ' ' + a + ' ' in content or content.startswith(a) or content.endswith(a):
-						await message.delete()
-						await nextMsg.delete()
-						await channel.send('That word is not allowed!')
+					content = str(content + nextMsg.content)
+					for char in ignoredChars:
+							content = content.replace(char, '')
+					for a in banWords:
+						a = a.lower()
+						if ' ' + a + ' ' in content or content.startswith(a) or content.endswith(a):
+							await message.delete()
+							await nextMsg.delete()
+							await channel.send('That word is not allowed!')
+				except:
+					pass
 
 
 @client.event
@@ -531,10 +550,12 @@ async def checkMute():
 
 
 async def bgTasks():
+	global do_background_tasks
+	do_background_tasks = False
 	while True:
 		await checkMute()
 		await checkBan()
-		await asyncio.sleep(1)
+		await asyncio.sleep(1000)
 keep_alive.keep_alive()
 
 
