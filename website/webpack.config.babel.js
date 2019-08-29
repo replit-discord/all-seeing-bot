@@ -4,7 +4,7 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 
 export default {
-  mode: "development",
+  mode: process.env.NODE_ENV === "development" ? "development" : "production",
   entry: "./app/index.ts",
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -28,7 +28,7 @@ export default {
         exclude: /node_modules/
       },
       {
-        test: /\.(postcss)$/,
+        test: /\.postcss$/,
         use: [
           process.env.NODE_ENV === "development" ? "style-loader" : MiniCssExtractPlugin.loader,
           "postcss-loader",
@@ -41,7 +41,7 @@ export default {
         ]
       },
       {
-        test: /\.css/,
+        test: /\.css$/,
         use: [
           process.env.NODE_ENV === "development" ? "style-loader" : MiniCssExtractPlugin.loader,
           "css-loader"
