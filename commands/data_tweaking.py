@@ -4,24 +4,28 @@ from rw import read, write
 from checkTrust import checkTrust
 from findTime import findTime
 helpMsg = discord.Embed(title='Customization', description='''
-**`muteduration <time>`:**  Sets the base mute duration.
+**`muteduration <time>`:**  Sets the base mute duration. (Default: `5m`)
 
-**`offenseduration <time>`:**  Sets how long an offense/msg for spam count lasts.
+**`offenseduration <time>`:**  Sets how long an offense/msg for spam count lasts. (Default: `5s`)
 
-**`offenselimit <ammount>`:**  Sets how many offenses a user can make before being muted.
+**`offenselimit <ammount>`:**  Sets how many offenses a user can make before being muted.  (Default: `5`)
 
-**`muteincrement <ammount>`:**  Sets how much mute time increses if muted multiple ammount of times in a time period.
+**`muteincrement <ammount>`:**  Sets how much mute time increses if muted multiple ammount of times in a time period.  (Default: `2`)
 
-**`phraselimit <ammount>`:**  Sets how many times a phrase can be repeated in a row in a message.
+**`phraselimit <ammount>`:**  Sets how many times a phrase can be repeated in a row in a message.  (Default: `10`)
 
-**`emojimax <ammount>`:**  Sets how many emojis can be in a message.
+**`emojimax <ammount>`:**  Sets the maximum ammount of emojis per message.  (Default: `30`)
 
-**`mentionlimit <ammount>`:**  Sets the maximum ammount of mentions in a message.
+**`mentionlimit <ammount>`:**  Sets the maximum ammount of mentions in a message.   (Default: `5`)
 
 **`actionlog <channel mention>`:**  Sets the action log channel.
 
 **`trustrole <role id/role ping>`:** Trusts a role
+
+**`modmail <channel mention>`:**  Sets the mod mail channel.
 (any of these commands can be used without args to get the current value)
+
+**`muterole <role id/role ping>`:**  Sets the muted role to the choses role.  (By default, will look for a role named `muted` but if there isnt one it will create one)
 ''', color=0x00ff80)
 
 
@@ -76,6 +80,33 @@ async def trust_role(args, msg):
 			await log(log_msg, msg, 'Trust')
 
 
+async def mute_role(args, msg):
+	author = msg.author
+	guild = msg.guild
+	channel = msg.channel
+	failed = False
+	if author.guild_permissions.administrator:
+		mute_role = await read('mute-role-id')
+
+		if len(msg.role_mentions) == 1:
+			role = msg.role_mentions[0].id
+			role.name = msg.role_mentions[0].name
+		else:
+			role = int(args[0])
+			role_name = guild.get_role(role)
+		if not failed:
+			await channel.send('Muted role has been set.')
+		else:
+			await channel.send('Muted role is already set!')
+		mute_role[guild.id] = role
+		await write('mute-role-id', mute_role)
+
+		author_name = author.display_name
+		log_msg = str(f'`{author_name}` set mute the role to `{role_name}`')
+		if not failed:
+			await log(log_msg, msg)
+
+
 async def untrust_role(args, msg):
 	author = msg.author
 	guild = msg.guild
@@ -113,10 +144,11 @@ async def test_trust(args, msg):
 	else:
 		await msg.channel.send('False')
 
+
 async def set_duration(args, msg):
 	if '' in args:
 		args.remove('')
-	
+
 	if msg.author.guild_permissions.administrator:
 		types = [
 			float
@@ -145,7 +177,7 @@ async def set_duration(args, msg):
 					else:
 						await msg.channel.send(
 							f'Mute duration cannot last less time then offense duration (Seconds: `{str(oT)}`)!'
-							)
+						)
 				elif len(args) != 1:
 
 					command = msg.content.lower().split(' ')[0]
@@ -163,13 +195,13 @@ async def set_duration(args, msg):
 				)
 		else:
 			cd = (await read("duration"))[msg.guild.id]
-			await msg.channel.send(f'Current offense duration is `{cd}`')
+			await msg.channel.send(f'Current mute duration is `{cd}`')
 
 
 async def offense_time(args, msg):
 	if'' in args:
 		args.remove('')
-	
+
 	if msg.author.guild_permissions.administrator:
 
 		types = [
@@ -287,7 +319,7 @@ async def reset(args, msg):
 
 
 async def Read(args, msg):
-	if msg.author.id == 487258918465306634:
+	if msg.author.id == 487258918465306634 or msg.author.id == 527937324865290260:
 		if len(args) == 1:
 			rMessage = await read(args[0])
 		elif len(args) == 2:
@@ -302,7 +334,7 @@ async def Read(args, msg):
 
 
 async def Write(args, msg):
-	if msg.author.id == 487258918465306634:
+	if msg.author.id == 487258918465306634 or msg.author.id == 527937324865290260:
 		if len(args) == 2:
 			await write(args[0], args[1])
 			rMessage = 'Task Complete'
@@ -370,7 +402,8 @@ async def phrase_limit(args, msg):
 
 async def mute_increment(args, msg):
 	try:
-		args.remove('')
+		while '' in args:
+			args.remove('')
 	except ValueError:
 		print('oof', args)
 	print(args)
@@ -379,7 +412,7 @@ async def mute_increment(args, msg):
 			float
 		]
 
-		if not len(args) == 0:
+		if len(args) > 0:
 			try:
 				args[0] = float(args[0])
 				if len(args) == 1:
@@ -570,3 +603,51 @@ async def action_channel(args, msg):
 		else:
 			cd = (await read("al"))[msg.guild.id]
 			await msg.channel.send(f'The current action log channel is <#{cd}>')
+
+
+async def mail_channel(args, msg):
+	try:
+		args.remove('')
+	except ValueError:
+		print('oof', args)
+	print(args)
+	if msg.author.guild_permissions.administrator:
+		if not len(args) == 0:
+			try:
+				try:
+					args[0] = int(args[0][2:-1])
+					bad_args = False
+				except ValueError:
+					bad_args = True
+					pass
+				if len(args) == 1 and not bad_args:
+					guild = msg.guild
+					od = await read('mod_mail')
+
+					od[guild.id] = args[0]
+					await write('mod_mail', od)
+					await msg.channel.send('Mod Mail channel has been set.')
+					author = msg.author.display_name
+					await log(
+						f'`{author}` set the Mod Mail channel to <#{args[0]}>',
+						msg
+					)
+				elif len(args) != 1:
+
+					command = msg.content.lower().split(' ')[0]
+					await msg.channel.send(
+						f'Invalid ammount of args. Example command: `{command} \#mod-mail`'
+					)
+				elif bad_args:
+					command = msg.content.lower().split(' ')[0]
+					await msg.channel.send(
+						f'Invalid ammount of args. Example command: `{command} \#mod-mail`'
+					)
+			except IndexError:
+						command = msg.content.lower().split(' ')[0]
+						await msg.channel.send(
+							f'Invalid ammount of args. Example command: `{command} \#mod-mail`'
+						)
+		else:
+			cd = (await read("mod_mail"))[msg.guild.id]
+			await msg.channel.send(f'The current mod mail channel is <#{cd}>')
