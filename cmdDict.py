@@ -1,4 +1,6 @@
-import commands.data_tweaking, commands.Help, commands.moderation_tools
+import commands.data_tweaking
+import commands.Help
+import commands.moderation_tools
 cmdDict = {
 	'muteduration': commands.data_tweaking.set_duration,
 	'offenseduration': commands.data_tweaking.offense_time,
@@ -23,5 +25,7 @@ cmdDict = {
 	'warn': commands.moderation_tools.warn,
 	'warns': commands.moderation_tools.get_warns,
 	'warnings': commands.moderation_tools.get_warns,
-	'removewarn': commands.moderation_tools.remove_warn
+	'removewarn': commands.moderation_tools.remove_warn,
+	'modmail': commands.data_tweaking.mail_channel,
+	'muterole': commands.data_tweaking.mute_role
 }
