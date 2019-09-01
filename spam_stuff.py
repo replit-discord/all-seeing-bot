@@ -25,6 +25,7 @@ class data:
 
 spam_chart = data.spam_chart()
 spam_chart.cache('spamChart', {})
+spam_chart.cache('after_spam', {})
 
 
 def get_spam_chart():
@@ -44,7 +45,7 @@ def log_offense(user, guild, duration, message):
 		user_dict = guild_dict[user]
 	else:
 		user_dict = []
-	item = [user, message.id, guild, date]
+	item = [message.author, message, message.guild, date]
 	user_dict.append(item)
 	guild_dict[user] = user_dict
 	full_offense_dict[guild] = guild_dict
@@ -70,19 +71,16 @@ async def check_expire(client):
 		a = a.split('/')
 
 		stuff = spamChart[int(a[0])][int(a[1])][0]
-
-		user = int(stuff[0])
-		mid = stuff[1]
-		guild = int(stuff[2])
-
-		guild = await client.fetch_guild(int(guild))
-
-		user = await guild.fetch_member(int(user))
+		guild = stuff[2]
+		user = stuff[0]
+		msg = stuff[1]
 
 		try:
+
 			if (await get_muted_role(guild)) in user.roles:
-				msg = await user.fetch_message(mid)
+
 				await msg.delete()
+
 		except NotFound:
 			pass
 
@@ -90,3 +88,4 @@ async def check_expire(client):
 		print('removed')
 
 	spam_chart.cache('spamChart', spamChart)
+
