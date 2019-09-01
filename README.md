@@ -13,7 +13,7 @@ In the case it is one of those types of content, then it counts as an additional
 
 #### Repl.it Page:
 
-Feel free to report bugs here, but I am more likely to respond here:
+Feel free to report bugs here, but I am more likely to respond at:
 https://repl.it/talk/share/AllSeeingBot/17964
 
 #### Invite Link:
