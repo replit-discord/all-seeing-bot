@@ -23,7 +23,7 @@ helpMsg = discord.Embed(title='Customization', description='''
 
 **`banlist`:**  Get a list of all banned reactions and strings.
 
-**`warn <reason>`:**  Warn a user.
+**`warn <user> <reason>`:**  Warn a user.
 
 (*=optional)
 ''', color=0xd82222)
@@ -55,11 +55,10 @@ def findDate(string):
 		'h',
 		'mo'
 	]
-	print(datetime.datetime.now().strftime("%Y-%m-%w-%W %H:%M:%S"))
-	print(strNow)
+
 	date = strNow[:13].split('-')
 	time = strNow[13:].split(':')
-	print(date, string[:-1])
+
 	if string[-1] == '':
 		date[1] = str(int(date[1]) + int(string[:-1]))
 
@@ -77,9 +76,9 @@ def findDate(string):
 
 	elif string[-1] == 'h':
 		time[0] = str(now.hour + int(string[:-1]))
-	print(date, time)
+	# print(date, time)
 	if string[-1] in timeTypes:
-		print(date, string[:-1])
+
 		try:
 			while int(time[2]) > 59:
 				time[2] = str(int(time[2]) - 60)
@@ -88,30 +87,28 @@ def findDate(string):
 			while int(time[1]) > 59:
 				time[1] = str(int(time[1]) - 60)
 				time[0] = str(int(time[0]) + 1)
-				print(time[1])
+				# print(time[1])
 			while int(time[0]) > 23:
 				time[0] = str(int(time[0]) - 24)
 				date[2] = str(int(date[2]) + 1)
 			while int(date[2]) > 6:
-				date[2] = str(int(date[0]) - 7)
+				date[2] = str(int(date[2]) - 7)
 				date[3] = str(int(date[3]) + 1)
 			while int(date[3]) > 51:
-				date[3] = str(int(date[2]) - 52)
+				date[3] = str(int(date[3]) - 52)
 				date[0] = str(int(date[0]) + 1)
 			while int(date[1]) > 11:
 				date[1] = str(int(date[1]) - 12)
 				date[0] = str(int(date[0]) + 1)
-			print(date, time)
+			# print(date, time)
 			for a in range(len(time)):
-				print(time[a])
+				# print(time[a])
 				if len(time[a]) == 1:
 					time[a] = '0' + str(a)
 			for a in date:
 				if len(a) == 1:
 					a = '0' + a
 			newDate = '-'.join(date) + ' ' + ':'.join(time)
-			print(newDate)
-			print(datetime.datetime.strptime(strNow, "%Y-%m-%w-%W %H:%M:%S") <= datetime.datetime.strptime(newDate, "%Y-%m-%w-%W %H:%M:%S"), 'oof?')
 			return str(newDate)
 		except ValueError:
 			pass
@@ -259,7 +256,7 @@ async def unban(args, msg):
 					)
 			else:
 				await channel.send('User has been unbanned')
-				await guild.unban(user=user, reason=dispName + ' unbanned him/her.')
+				await guild.unban(user=user, reason=dispName + ' unbanned them.')
 				if log_action:
 					disp_name = msg.author.display_name
 					username = user.display_name
@@ -333,22 +330,35 @@ async def mute(args, msg):
 			date_found = False
 		mute_user_id = msg.mentions[0].id
 		if date_found:
-			bl = (await read('muteList'))
-			if guild.id not in bl:
-				bl[guild.id] = {}
-			bl[guild.id][mute_user_id] = str(date)
-			await write('muteList', bl)
+			user = guild.get_member(mute_user_id)
+			muteList = await read('muteList')
+			if guild.id in muteList:
+				guild_muteList = muteList[guild.id]
+			else:
+				guild_muteList = {}
+			if user.id in guild_muteList:
+
+				guild_muteList[user.id]['timeup'] = date
+
+			else:
+				guild_muteList[user.id] = {'Offenses': 0, 'timeup': date}
+
+			muteList[guild.id] = guild_muteList
+			await write('muteList', muteList)
+
 			if len(args) > 2:
 				reason = ' '.join(args[2:])
 				user = guild.get_member(mute_user_id)
-				username = user.display_name
+
 				await user.add_roles(muted_role, reason=reason)
+
 				await channel.send('User has been muted')
 				log_dict = await read('al')
 				if guild.id in log_dict:
-					disp_name = msg.author.display_name
+
 					await log(
-						f'`{disp_name}` muted {username} for **reason:** `{reason}`  **duration:** `{args[1]}`'
+						f'<@{author.id}> muted <@{user.id}> for **reason:** `{reason}`  **duration:** `{args[1]}`',
+						msg
 					)
 				else:
 					print('oof')
@@ -451,12 +461,12 @@ async def unmute(args, msg):
 				f'`{disp_name}` unmuted {username}',
 				msg
 			)
-		mute_list = await read('muteList')
+		'''mute_list = await read('muteList')
 		if guild.id in mute_list:
 			guild_mute_list = mute_list[guild.id]
 			if user.id in guild_mute_list:
 				del mute_list[guild.id][user.id]
-				await write('muteList', mute_list)
+				await write('muteList', mute_list)'''
 		perma_list = await read('permaMute')
 		if guild.id in perma_list:
 			guild_perma_list = perma_list[guild.id]
@@ -621,17 +631,15 @@ async def remove_warn(args, msg, client):
 					)
 					embed.add_field(
 						name=date,
-						value=f'warned by: <@{moderator}>',
+						value=f'Warned by: <@{moderator}>',
 						inline=True
 					)
-					embed.set_footer(text='This message has a 60s timeout.')
+					embed.set_footer(text='This message has a 10s timeout.')
 					check_msg = await channel.send(
 						'Are you sure that you would like to remove this warning? You cannot undo this!:'
 						, embed=embed)
 					await check_msg.add_reaction('✅')
 					await check_msg.add_reaction('❌')
-
-
 
 					def check(reaction, user):
 						global user_reply
@@ -644,14 +652,18 @@ async def remove_warn(args, msg, client):
 						return user == author and good_emoji and reaction.message.id == check_msg.id
 
 					try:
-						reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
+						reaction, user = await client.wait_for(
+							'reaction_add',
+							timeout=10.0,
+							check=check
+						)
+
 					except asyncio.TimeoutError:
 						await channel.send('Message timed out.')
 					else:
 						if user_reply == '✅':
-							print(path[1])
-							print(warn_dict[guild.id][user.id][int(path[1])])
-							del warn_dict[guild.id][user.id][int(path[1])]
+
+							del warn_dict[guild.id][int(path[0])][int(path[1])]
 							await write('warn_list', warn_dict)
 							await channel.send('Warning has been deleted.')
 						else:
