@@ -32,6 +32,6 @@ $blue: orange;
   margin: 0;
   padding: 0;
   border: 0 none;
-  font-family: 'IBM Plex Sans', sans-serif !important;
+  font-family: 'IBM Plex Sans', sans-serif;
 }
 </style>
