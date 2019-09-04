@@ -6,7 +6,7 @@
       all-seeing-bot</el-link>. updates real time
     </p>
     <section>
-      <h2>to false you must be authentiacted</h2>
+      <h2>to sign in you must be authentiacted</h2>
       <div v-if="!isSignedIn">
         <el-button type="primary" >Sign In</el-button>
       </div>
@@ -16,40 +16,7 @@
 
 <script>
   export default {
-    name: "Home",
-    data() {
-      return {
-        isSignedIn: false,
-        permissions: {
-        	'muteduration': false,
-          'offenseduration': false,
-          'offenselimit': false,
-          'help': false,
-          'reset': false,
-          'read': false,
-          'write': false,
-          'ban': false,
-          'unban': false,
-          'phraselimit': false,
-          'muteincrement': false,
-          'emojimax': false,
-          'mentionlimit': false,
-          'actionlog': false,
-          'trust': false,
-          'trustrole': false,
-          'untrustrole': false,
-          'kick': false,
-          'mute': false,
-          'unmute': false,
-          'warn': false,
-          'warns': false,
-          'warnings': false,
-          'removewarn': false,
-          'modmail': false,
-          'muterole': false
-        }
-      }
-    }
+    name: "Home"
   }
 </script>
 

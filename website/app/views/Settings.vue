@@ -3,45 +3,17 @@
     <h1>settings</h1>
     <p>update settings that directoy control the bot</p>
 
-    <section>
-      <h3>choose</h3>
-      <el-radio v-model="radioValue" label="a">alfa</el-radio>
-      <el-radio v-model="radioValue" label="b">bravo</el-radio>
-    </section>
+    <h3>name</h3>
+    <el-input placeholder="input here" v-model="inputValue" style="width: 200px"></el-input>
 
-    <section>
-      <h3>sensitivity</h3>
-      <div>
-        <span class="demonstration">Customized initial value</span>
-        <el-slider style="width: 300px; margin-left: 10px;" v-model="sliderValue"></el-slider>
-      </div>
-    </section>
-
-    <section>
-      <h3>selections</h3>
+    <div v-for="perm in Object.keys(permissions)" :key=perm class="permission">
+      <p>{{ perm }}</p>
       <el-switch
-        v-model="switchValue"
+        v-model="permissions[perm]"
         active-color="#13ce66"
-        inactive-color="#ff4949"
-        active-text="occurs when true"
-      >
+        inactive-color="#ff4949">
       </el-switch>
-    </section>
-
-    <section>
-      <h3>transfers</h3>
-      <el-transfer
-        v-model="transferValue"
-        :data="transferData"
-        :titles="['From', 'To']"
-      >
-      </el-transfer>
-    </section>
-
-    <section>
-      <h3>input</h3>
-      <el-input placeholder="input here" v-model="inputValue"></el-input>
-    </section>
+    </div>
   </div>
 </template>
 
@@ -49,32 +21,44 @@
 export default {
   name: "Settings",
   data() {
-    let generateData = () => {
-      const data = [];
-      for (let i = 1; i <= 15; i++) {
-        data.push({
-          key: i,
-          label: `Option ${i}`,
-          disabled: i % 4 === 0
-        });
-      }
-      return data;
-    };
-
     return {
-      radioValue: "a",
-      sliderValue: "50",
-      switchValue: true,
-      transferData: generateData(),
-      transferValue: [1, 4],
+      isSignedIn: false,
+      permissions: {
+        muteduration: false,
+        offenseduration: false,
+        offenselimit: false,
+        help: false,
+        reset: false,
+        read: false,
+        write: false,
+        ban: false,
+        unban: false,
+        phraselimit: false,
+        muteincrement: false,
+        emojimax: false,
+        mentionlimit: false,
+        actionlog: false,
+        trust: false,
+        trustrole: false,
+        untrustrole: false,
+        kick: false,
+        mute: false,
+        unmute: false,
+        warn: false,
+        warns: false,
+        warnings: false,
+        removewarn: false,
+        modmail: false,
+        muterole: false
+      },
       inputValue: ""
     }
   }
 }
 </script>
 
-<style lang="postcss" scoped>
-section {
-  padding: $spacing 0;
+<style scoped lang="postcss">
+.permission {
+  padding: 10px;
 }
 </style>

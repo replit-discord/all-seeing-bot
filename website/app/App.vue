@@ -11,7 +11,6 @@
 
 <script lang="ts">
 import Navigation from "./Navigation";
-import f from "./charlie";
 
 export default {
   name: "App",
