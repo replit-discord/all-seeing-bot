@@ -12,6 +12,7 @@ from ignoredChars import ignoredChars
 from phrase_spam import is_repeating
 from encryption_tools import decode
 import commands.moderation_tools
+from checkTrust import checkTrust
 from cryptography.fernet import Fernet
 from emojiCheck import count as emoji_count
 from commands.moderation_tools import findDate
@@ -50,9 +51,12 @@ async def on_ready():
 			print(b / len(thinger))
 		await write("test_thinger", {"thinger": []})
 		await write('bot_prefix', '?')
-		bot_prefix = await read('bot_prefix', False)
-		game = discord.Game(name='The bot prefix is: ' + bot_prefix)
-		await client.change_presence(activity=game)
+
+		await client.change_presence(
+			activity=discord.Activity(
+				name='Everything', type=discord.ActivityType(3)
+			)
+		)
 		print("I'm in")
 		print(client.user)
 		print('settings up background tasks')
@@ -78,11 +82,13 @@ async def on_member_join(member):
 			muted_role = await get_muted_role(guild)
 			await member.add_roles(
 				muted_role,
-				reason='User was permanately muted. Role automatically given when they joined.'
+				reason='User was permanately muted.'
+				'Role automatically given when they joined.'
 			)
 
 			await log_channel.send(
-				f'`{username}` was given the mute role because they were muted permanately when they left the server.'
+				f'`{username}` was given the mute role because they were'
+				'muted permanately when they left the server.'
 			)
 
 	guild_mute_list = (await read('muteList'))[guild.id]
@@ -90,18 +96,20 @@ async def on_member_join(member):
 		muted_role = await get_muted_role(guild)
 		await member.add_roles(
 			muted_role,
-			reason='User\'s mute time is not up yet. They were muted again so they can\'t evade mute.'
+			reason='User\'s mute time is not up yet. They were muted again so they'
+			'can\'t evade mute.'
 		)
 		await log_channel.send(
-			f'`{username}` was given the mute role because they were muted muted before they left the server, and their duration is not up.'
+			f'`{username}` was given the mute role because they were'
+			'muted muted before they left the server, and their duration is not up.'
 		)
-
-	print(str(member.display_name) + ' has joined the server!')
 
 
 @client.event
 async def on_message_edit(before, after):
-	if after.author != client.user:
+	user = before.author
+	guild = before.guild
+	if after.author != client.user and not (await checkTrust(guild, user)):
 		async def log(text, guild, title='Edit'):
 			log_embed = discord.Embed(
 				title=title,
@@ -136,7 +144,8 @@ async def on_message_delete(message):
 	guild = message.guild
 	author = message.author
 	muted = (await get_muted_role(guild)) in author.roles
-	if author != client.user and not muted:
+	trusted = (await checkTrust(guild, author))
+	if author != client.user and not muted and not trusted:
 		async def log(text, guild, title='Delete'):
 			log_embed = discord.Embed(
 				title=title,
@@ -166,9 +175,6 @@ Message:
 @client.event
 async def on_message(message):
 	startTime = datetime.datetime.now()
-
-	def mark_time(lable):
-		print(lable, datetime.datetime.now() - startTime)
 
 	private = str(message.channel.type) == 'private'
 	if not private:
@@ -218,8 +224,7 @@ async def on_message(message):
 			bd = await read('duration')
 			bd[guild.id] = 5
 			await write('duration', bd)
-			base_duration = 5
-
+			base_duration = 300
 		try:
 			offenseDuration = (await read('od'))[guild.id]
 
@@ -246,7 +251,7 @@ async def on_message(message):
 			bd = await read('duration')
 			bd[guild.id] = 5
 			await write('duration', bd)
-			base_duration = 5
+			base_duration = 300
 
 		if message.content.startswith('?'):
 
@@ -315,9 +320,9 @@ async def on_message(message):
 						safe = True
 					elif content[prefix_length:].lower().startswith('unbanword'):
 						content = content[prefix_length:][10:]
-						print(content)
+
 						try:
-							print(content.lower())
+
 							banWords.remove(content.lower())
 							fullBanWords = await read('banWords', True, False)
 							fullBanWords[guild.id] = banWords
@@ -523,8 +528,7 @@ async def on_message(message):
 
 					guild_muteList = (await read('muteList'))[guild.id]
 
-					print(f'{str(mute_duration)}d')
-					timeup = commands.moderation_tools.findDate(str(f'{str(mute_duration)}m'))
+					timeup = commands.moderation_tools.findDate(str(f'{str(mute_duration)}s'))
 
 					if user.id in guild_muteList:
 						if (await get_muted_role(guild)) not in author.roles:
@@ -549,7 +553,6 @@ async def on_message(message):
 						)
 				except UnicodeEncodeError:
 					pass
-		mark_time('>>>>>>check end')
 
 		thinger = ast.literal_eval(str(await read('test_thinger')))
 
@@ -625,7 +628,6 @@ async def checkMute():
 			del mute_list[a[0]][a[1]]
 		else:
 			user = guild.get_member(a[1])
-			print('unmuting')
 			username = user.display_name
 			await log(
 				f'`{username}` has been unmuted because their time is up',
