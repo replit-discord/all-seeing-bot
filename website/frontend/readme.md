@@ -1,6 +1,6 @@
-# all-seeing-bot control interface
+# all-seeing-bot web interface frontend
 
-frontend for the all-seeing bot. adjust bot controls and more.
+frontend for the all-seeing bot web interface
 
 ## setup
 

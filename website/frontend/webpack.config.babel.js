@@ -18,7 +18,7 @@ export default {
     new MiniCssExtractPlugin()
   ],
   resolve: {
-    extensions: [".vue", ".ts", ".js"]
+    extensions: [".js", ".ts", ".vue"]
   },
   devServer: {
     proxy: {

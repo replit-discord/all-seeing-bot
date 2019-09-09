@@ -16,17 +16,11 @@ export default {
   name: "App",
   components: {
     "navigation": Navigation
-  },
-  mounted() {
-    console.log("mounted");
-    console.log(f);
   }
 };
 </script>
 
 <style lang="postcss">
-$blue: orange;
-
 * {
   margin: 0;
   padding: 0;
