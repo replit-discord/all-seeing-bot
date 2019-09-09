@@ -1,4 +1,5 @@
 # All Seeing Bot
+
 How it works
 
 Every message counts as one offense, unless it has one of five types of content:
@@ -11,18 +12,18 @@ Every message counts as one offense, unless it has one of five types of content:
 
 In the case it is one of those types of content, then it counts as an additional offense, that lasts for twice the duration. Every offense expires after a set amount of time (a default of five seconds). If a user has over a set amount of offenses (a default of five), they are muted for a set amount of time (a default of five minutes).
 
-#### Repl.it Page:
+#### Repl.it Page
 
 Feel free to report bugs here, but I am more likely to respond at:
 https://repl.it/talk/share/AllSeeingBot/17964
 
-#### Invite Link:
+#### Invite Link
 
 https://discordapp.com/oauth2/authorize?client_id=610205862090244106&scope=bot&permissions=268446790
 
+## Alpha Version 1.0.1 released
 
-## Alpha Version 1.0.1 released.
-### Features:
+### Features
 
 Anti-Mute evasion. (If a user is muted, and re-joins the server, the muted role is automatically added again, unless the duration of the mute has ended.)
 
@@ -34,6 +35,6 @@ Detects bypassing methods (for word bans). I have yet to see a bypassing method 
 
 Highly customizable: Almost every setting is customizable. (Oh and trusted role command toggling is gonna be a thing, I am waiting for the website to have a gui for it.)
 
-### Bug Fixes:
+### Bug Fixes
 
 Fixed a bug causing spam messages to sometimes not be deleted.
