@@ -5,7 +5,7 @@ import MiniCssExtractPlugin from "mini-css-extract-plugin";
 
 export default {
   mode: process.env.NODE_ENV === "development" ? "development" : "production",
-  entry: "./app/index.ts",
+  entry: "./src/index.ts",
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "output.js"
@@ -19,6 +19,13 @@ export default {
   ],
   resolve: {
     extensions: [".vue", ".ts", ".js"]
+  },
+  devServer: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000"
+      }
+    }
   },
   module: {
     rules: [

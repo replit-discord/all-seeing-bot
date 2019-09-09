@@ -1,0 +1,11 @@
+{
+  "name": "all-seeing-bot-backend",
+  "private": true,
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "index.js",
+  "dependencies": {
+    "esm": "^3.2.25",
+    "express": "^4.17.1"
+  }
+}
