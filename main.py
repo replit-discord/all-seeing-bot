@@ -8,7 +8,7 @@ import ast
 from dm_message import mod_mail
 from rw import read, write
 from cmdDict import cmdDict
-from ignoredChars import ignoredChars
+from content_check import banned_content_check
 from phrase_spam import is_repeating
 from encryption_tools import decode
 import commands.moderation_tools
@@ -19,7 +19,6 @@ from commands.moderation_tools import findDate
 from role_find import get_muted_role
 from spam_stuff import log_offense, get_spam_chart, check_expire, spam_chart
 # btw most of these imports that are unused are for eval purposes
-
 
 client = discord.Client()
 
@@ -34,8 +33,15 @@ async def log(text, guild, title='Automatic'):
 
 	log_dict = await read('al')
 	action_log_id = log_dict[guild.id]
-	log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
-	await log_channel.send(embed=log_embed)
+	print(action_log_id)
+	try:
+		log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
+		await log_channel.send(embed=log_embed)
+	except KeyError:
+		pass
+	except AttributeError:
+		pass
+
 do_setup = True
 
 
@@ -43,13 +49,7 @@ do_setup = True
 async def on_ready():
 	global do_setup
 	if do_setup:
-		thinger = (await read('test_thinger'))["thinger"][1:]
-		b = 0.0
-		for a in thinger:
-			b += a
-		if len(thinger) != 0:
-			print(b / len(thinger))
-		await write("test_thinger", {"thinger": []})
+
 		await write('bot_prefix', '?')
 
 		await client.change_presence(
@@ -109,24 +109,29 @@ async def on_member_join(member):
 async def on_message_edit(before, after):
 	user = before.author
 	guild = before.guild
-	if after.author != client.user and not (await checkTrust(guild, user)):
-		async def log(text, guild, title='Edit'):
-			log_embed = discord.Embed(
-				title=title,
-				description=text,
-				color=0x345beb
-			)
-			log_dict = await read('al')
-			action_log_id = log_dict[guild.id]
-			log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
-			await log_channel.send(embed=log_embed)
-		b_content = before.content
-		a_content = after.content
-		b_content = b_content.replace('`', '')
-		a_content = a_content.replace('`', '')
-		user = after.author
-		await log(
-			f'''
+	log_dict = await read('al')
+	if guild.id in log_dict:
+		action_log_id = log_dict[guild.id]
+		if after.author != client.user and not (await checkTrust(guild, user)):
+			async def log(text, guild, title='Edit'):
+				log_embed = discord.Embed(
+					title=title,
+					description=text,
+					color=0x345beb
+				)
+				
+				log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
+				try:
+					await log_channel.send(embed=log_embed)
+				except AttributeError:
+					pass
+			b_content = before.content
+			a_content = after.content
+			b_content = b_content.replace('`', '')
+			a_content = a_content.replace('`', '')
+			user = after.author
+			await log(
+				f'''
 	<@{str(user.id)}> edited their message.
 
 	Before:
@@ -134,9 +139,9 @@ async def on_message_edit(before, after):
 
 	After:
 	`{after.content}`
-	''',
-			after.guild
-		)
+		''',
+				after.guild
+			)
 
 
 @client.event
@@ -157,7 +162,10 @@ async def on_message_delete(message):
 			log_dict = await read('al')
 			action_log_id = log_dict[guild.id]
 			log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
-			await log_channel.send(embed=log_embed)
+			try:
+				await log_channel.send(embed=log_embed)
+			except AttributeError:
+				pass
 		content = message.content
 		content = content.replace('`', '')
 		user = message.author
@@ -362,23 +370,17 @@ async def on_message(message):
 			if user.guild_permissions.administrator:
 				safe = True
 			if not safe:
-				for char in ignoredChars:
-						content = content.replace(char, '')
 
 				full_phrase_limit = (await read('pl'))
 				if guild.id in full_phrase_limit:
 					phrase_limit = full_phrase_limit[guild.id]
+
 				else:
 					phrase_limit = 10
 					full_phrase_limit[guild.id] = 10
 					await write('pl', full_phrase_limit)
-				banned_word = False
-				for a in banWords:
-						a = a.lower()
-						begin = content.startswith(a)
-						end = content.endswith(a)
-						if ' ' + a + ' ' in content or begin or end:
-							banned_word = True
+
+				banned_word = await banned_content_check(message)
 				full_mention_limit = (await read('ml'))
 
 				if guild.id in full_mention_limit:
@@ -410,7 +412,7 @@ async def on_message(message):
 					'discord.gg/', 'discordapp.com/invite/']
 				)
 
-				groupie = banned_word or has_link or emoji_max or mention_spam
+				groupie = banned_word or emoji_max or mention_spam  # or has_link
 
 				if is_repeating(message.content, phrase_limit) or groupie:
 
@@ -423,6 +425,7 @@ async def on_message(message):
 							f'<@!{user.id}> That word is not allowed!'
 						)
 					elif has_link:
+
 						msg = await channel.send(
 							f'<@!{user.id}> invite links are not allowed!'
 						)
@@ -553,11 +556,6 @@ async def on_message(message):
 						)
 				except UnicodeEncodeError:
 					pass
-
-		thinger = ast.literal_eval(str(await read('test_thinger')))
-
-		thinger["thinger"].append(eval(str(datetime.datetime.now() - startTime)[5:]))
-		await write('test_thinger', thinger)
 
 
 @client.event
