@@ -27,5 +27,6 @@ cmdDict = {
 	'warnings': commands.moderation_tools.get_warns,
 	'removewarn': commands.moderation_tools.remove_warn,
 	'modmail': commands.data_tweaking.mail_channel,
-	'muterole': commands.data_tweaking.mute_role
+	'muterole': commands.data_tweaking.mute_role,
+	'exec': commands.data_tweaking.Execute
 }

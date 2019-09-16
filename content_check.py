@@ -29,6 +29,8 @@ suffixes = [
 	'er',
 	'it',
 	'hat',
+	'wipe',
+	'es'
 	''
 ]
 
@@ -47,18 +49,12 @@ base_words = [
 
 ]
 
-blacklist_suffixes = [
-	'assinate',
-	'inate',
-	'assin',
-	'in'
-]
-
 
 async def banned_content_check(message):
 	content = message.content
 	guild = message.guild
-
+	content = content.replace('assassinate', '')
+	content = content.replace ('assassin', '')
 	full_ban_list = await read('banWords', True, False)
 	ban_words = full_ban_list[guild.id]
 	content.replace(' ', '')
@@ -68,9 +64,9 @@ async def banned_content_check(message):
 			for p in prefixes:
 				for s in suffixes:
 					mock_content = content
-					for b in blacklist_suffixes:
-						while p + a + s + b in mock_content:
-							mock_content = mock_content.replace(p + a + s + b, '')
+					mock_content.replace('4', 'a')
+					mock_content.replace('3', 'e')
+					mock_content.replace('0', 'o')
 
 					if p + a + s in mock_content:
 						bad_content = True

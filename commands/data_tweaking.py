@@ -1,8 +1,10 @@
 import discord
+import io
 from at import argTest
 from rw import read, write
 from checkTrust import checkTrust
 from findTime import findTime
+from contextlib import redirect_stdout
 helpMsg = discord.Embed(title='Customization', description='''
 **`muteduration <time>`:**  Sets the base mute duration. (Default: `5m`)
 
@@ -40,6 +42,38 @@ async def log(text, msg, title='Customization'):
 	action_log_id = log_dict[guild.id]
 	log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
 	await log_channel.send(embed=log_embed)
+
+
+def execute(_code, loc):
+	'''
+	Executes code asynchronously, credits to mat, https://matdoes.dev
+	'''
+	_code = _code.replace('\n', '\n ')
+	globs = globals()
+	globs.update(loc)
+	exec(
+		'async def __ex():\n ' + _code,
+		globs
+	)
+	return globs['__ex']()
+
+
+async def Execute(args, msg):
+	author = msg.author
+	if author.id == 527937324865290260 or author.id == 487258918465306634:
+		f = io.StringIO()
+		with redirect_stdout(f):
+			command = msg.content.split(None, 1)[1]
+			await execute(command, locals())
+		out = f.getvalue()
+		if out == '':
+			out = 'No output.'
+		await msg.channel.send(
+			embed=discord.Embed(
+				title='Unsafe Eval',
+				description=out
+			)
+		)
 
 
 async def trust_role(args, msg):
@@ -195,7 +229,7 @@ async def set_duration(args, msg):
 				)
 		else:
 			cd = (await read("duration"))[msg.guild.id]
-			await msg.channel.send(f'Current mute duration is `{cd}`')
+			await msg.channel.send(f'Current mute duration is `{cd}`s')
 
 
 async def offense_time(args, msg):
@@ -248,7 +282,7 @@ async def offense_time(args, msg):
 				)
 		else:
 			cd = (await read("od"))[msg.guild.id]
-			await msg.channel.send(f'Current offense duration is `{cd}`')
+			await msg.channel.send(f'Current offense duration is `{cd}`s')
 
 
 async def offense_limit(args, msg):

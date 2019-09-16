@@ -182,7 +182,6 @@ Message:
 
 @client.event
 async def on_message(message):
-	startTime = datetime.datetime.now()
 
 	private = str(message.channel.type) == 'private'
 	if not private:
@@ -230,7 +229,7 @@ async def on_message(message):
 		except KeyError:
 
 			bd = await read('duration')
-			bd[guild.id] = 5
+			bd[guild.id] = 300
 			await write('duration', bd)
 			base_duration = 300
 		try:
@@ -257,7 +256,7 @@ async def on_message(message):
 		except KeyError:
 
 			bd = await read('duration')
-			bd[guild.id] = 5
+			bd[guild.id] = 300
 			await write('duration', bd)
 			base_duration = 300
 
@@ -417,8 +416,8 @@ async def on_message(message):
 				if is_repeating(message.content, phrase_limit) or groupie:
 
 					await message.delete()
-
-					log_offense(message.author.id, guild.id, offenseDuration * 2, message)
+					if channel.id != 620423931366735923:
+						log_offense(message.author.id, guild.id, offenseDuration * 2, message)
 
 					if banned_word:
 						msg = await channel.send(
@@ -497,13 +496,15 @@ async def on_message(message):
 					mri = (await read('mute-role-id'))[guild.id]
 				except KeyError:
 					pass
-
-				offenses = log_offense(
-					message.author.id,
-					guild.id,
-					offenseDuration,
-					message
-				)
+				if channel.id != 620423931366735923:
+					offenses = log_offense(
+						message.author.id,
+						guild.id,
+						offenseDuration,
+						message
+					)
+				else:
+					offenses = 0
 
 				spamChart = get_spam_chart()
 
@@ -546,7 +547,9 @@ async def on_message(message):
 					await message.delete()
 
 				try:
+					print(repr(content))
 
+					content = content.replace("'", '')
 					yesAnnotherThing = str(repr(content).encode('ascii'))
 
 					if content not in (yesAnnotherThing).replace('\\n', '\n'):

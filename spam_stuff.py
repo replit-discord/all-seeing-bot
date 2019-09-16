@@ -88,4 +88,3 @@ async def check_expire(client):
 		print('removed')
 
 	spam_chart.cache('spamChart', spamChart)
-
