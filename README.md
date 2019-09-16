@@ -21,13 +21,13 @@ https://repl.it/talk/share/AllSeeingBot/17964
 
 https://discordapp.com/oauth2/authorize?client_id=610205862090244106&scope=bot&permissions=268446790
 
-## Alpha Version 1.0.1 released
-
 ### Features
 
 Anti-Mute evasion. (If a user is muted, and re-joins the server, the muted role is automatically added again, unless the duration of the mute has ended.)
 
 Mod Mail, with multi-server support.
+
+Action logs
 
 Banned words and reactions.
 
@@ -35,6 +35,3 @@ Detects bypassing methods (for word bans). I have yet to see a bypassing method 
 
 Highly customizable: Almost every setting is customizable. (Oh and trusted role command toggling is gonna be a thing, I am waiting for the website to have a gui for it.)
 
-### Bug Fixes
-
-Fixed a bug causing spam messages to sometimes not be deleted.
