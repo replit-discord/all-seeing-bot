@@ -20,6 +20,14 @@ export default {
   resolve: {
     extensions: [".vue", ".ts", ".js"]
   },
+  devServer: {
+    port: 9090,
+    compress: true,
+    historyApiFallback: true,
+    proxy: {
+      "/api": "http://localhost:8080"
+    }
+  },
   module: {
     rules: [
       {

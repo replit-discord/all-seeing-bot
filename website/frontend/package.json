@@ -1,13 +1,13 @@
 {
   "name": "website",
-  "private": "true",
+  "private": true,
   "version": "1.0.0",
   "main": "index.js",
+  "license": "MIT",
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack",
     "serve": "cross-env NODE_ENV=development webpack-dev-server"
   },
-  "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.5.5",
     "@babel/preset-env": "^7.5.5",

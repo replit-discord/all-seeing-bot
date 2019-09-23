@@ -1,0 +1,19 @@
+{
+  "name": "backend",
+  "private": true,
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development nodemon -r esm server.js",
+    "start": "cross-env NODE_ENV=production node -r esm server.js"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.2"
+  },
+  "dependencies": {
+    "cross-env": "^6.0.0",
+    "esm": "^3.2.25",
+    "express": "^4.17.1"
+  }
+}
