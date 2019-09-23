@@ -4,19 +4,21 @@ import os
 import asyncio
 import keep_alive
 import sys
+import ast
+from dm_message import mod_mail
 from rw import read, write
 from cmdDict import cmdDict
 from ignoredChars import ignoredChars
 from phrase_spam import is_repeating
+from encryption_tools import decode
 import commands.moderation_tools
-from json_store_client import AsyncClient
 from cryptography.fernet import Fernet
 from emojiCheck import count as emoji_count
-
+from commands.moderation_tools import findDate
 from role_find import get_muted_role
-jsonclient = AsyncClient(os.environ.get('JSON_LINK'))
+from spam_stuff import log_offense, get_spam_chart, check_expire, spam_chart
+# btw most of these imports that are unused are for eval purposes
 
-key = os.environ.get('KEY')
 
 client = discord.Client()
 
@@ -28,6 +30,7 @@ async def log(text, guild, title='Automatic'):
 		description=text,
 		color=0x00e0f5
 	)
+
 	log_dict = await read('al')
 	action_log_id = log_dict[guild.id]
 	log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
@@ -39,30 +42,30 @@ do_setup = True
 async def on_ready():
 	global do_setup
 	if do_setup:
+		thinger = (await read('test_thinger'))["thinger"][1:]
+		b = 0.0
+		for a in thinger:
+			b += a
+		if len(thinger) != 0:
+			print(b / len(thinger))
+		await write("test_thinger", {"thinger": []})
 		await write('bot_prefix', '?')
-		await write('spamChart', {})
-
-		print(repr(await read('bot_prefix', False, True)))
-		await client.user.edit(username='ASB')
 		bot_prefix = await read('bot_prefix', False)
 		game = discord.Game(name='The bot prefix is: ' + bot_prefix)
-
 		await client.change_presence(activity=game)
 		print("I'm in")
 		print(client.user)
 		print('settings up background tasks')
 		loop = client.loop
+		tasks = loop.create_task(bgTasks())
 
-		
-			task1 = loop.create_task(bgTasks())
-		print(len({t._coro.__qualname__ for t in asyncio.Task.all_tasks()}))
-		await task1
+		await tasks
 	do_setup = False
 
 
 @client.event
 async def on_member_join(member):
-	print('hihihihihi')
+
 	guild = member.guild
 	log_dict = await read('al')
 	action_log_id = log_dict[guild.id]
@@ -79,8 +82,9 @@ async def on_member_join(member):
 			)
 
 			await log_channel.send(
-				f'`{username}` was given the mute role because he/she was muted permanately before they left the server.'
+				f'`{username}` was given the mute role because they were muted permanately when they left the server.'
 			)
+
 	guild_mute_list = (await read('muteList'))[guild.id]
 	if member.id in guild_mute_list:
 		muted_role = await get_muted_role(guild)
@@ -89,31 +93,101 @@ async def on_member_join(member):
 			reason='User\'s mute time is not up yet. They were muted again so they can\'t evade mute.'
 		)
 		await log_channel.send(
-			f'`{username}` was given the mute role because he/she was muted muted before they left the server, and their duration is not up.'
+			f'`{username}` was given the mute role because they were muted muted before they left the server, and their duration is not up.'
 		)
 
 	print(str(member.display_name) + ' has joined the server!')
 
 
 @client.event
+async def on_message_edit(before, after):
+	if after.author != client.user:
+		async def log(text, guild, title='Edit'):
+			log_embed = discord.Embed(
+				title=title,
+				description=text,
+				color=0x345beb
+			)
+			log_dict = await read('al')
+			action_log_id = log_dict[guild.id]
+			log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
+			await log_channel.send(embed=log_embed)
+		b_content = before.content
+		a_content = after.content
+		b_content = b_content.replace('`', '')
+		a_content = a_content.replace('`', '')
+		user = after.author
+		await log(
+			f'''
+	<@{str(user.id)}> edited their message.
+
+	Before:
+	`{before.content}`
+
+	After:
+	`{after.content}`
+	''',
+			after.guild
+		)
+
+
+@client.event
+async def on_message_delete(message):
+	guild = message.guild
+	author = message.author
+	muted = (await get_muted_role(guild)) in author.roles
+	if author != client.user and not muted:
+		async def log(text, guild, title='Delete'):
+			log_embed = discord.Embed(
+				title=title,
+				description=text,
+				color=0xffa200
+			)
+			time = datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S")
+			log_embed.set_footer(text=time)
+			log_dict = await read('al')
+			action_log_id = log_dict[guild.id]
+			log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
+			await log_channel.send(embed=log_embed)
+		content = message.content
+		content = content.replace('`', '')
+		user = message.author
+		await log(
+			f'''
+<@{str(user.id)}>'s message was deleted.
+
+Message:
+`{content}`
+	''',
+			guild
+		)
+
+
+@client.event
 async def on_message(message):
+	startTime = datetime.datetime.now()
+
+	def mark_time(lable):
+		print(lable, datetime.datetime.now() - startTime)
 
 	private = str(message.channel.type) == 'private'
 	if not private:
-		
+
 		user = message.author
-		sc = await read('spamChart')
+		sc = get_spam_chart()
+
 		try:
 			if message.guild.id not in sc:
 				sc[message.guild.id] = {}
+				spam_chart.cache('spam_chart', sc)
 		except AttributeError:
 			pass
-		await write('spamChart', sc)
+
 		safe = False
 		guild = message.guild
 		try:
 			banWords = (await read('banWords', True, False))[guild.id]
-		except:
+		except KeyError:
 			banWords = await read('banWords', True, False)
 
 			banWords[guild.id] = []
@@ -122,7 +196,7 @@ async def on_message(message):
 			banWords = []
 		try:
 			banEmojis = (await read('banEmojis', True, False))[guild.id]
-		except:
+		except KeyError:
 			banEmojis = await read('banEmojis', True, False)
 			banEmojis[guild.id] = []
 			await write('banEmojis', banEmojis, False)
@@ -132,14 +206,14 @@ async def on_message(message):
 		channel = message.channel
 
 		prefix_length = len(bot_prefix)
-		deleted = False
-	if message.author != client.user and not private:
-		beforedate = datetime.datetime.now()
 
+	if message.author != client.user and private:
+		await mod_mail(message, client)
+	elif message.author != client.user:
 
 		try:
 			base_duration = (await read('duration'))[guild.id]
-		except:
+		except KeyError:
 
 			bd = await read('duration')
 			bd[guild.id] = 5
@@ -148,6 +222,7 @@ async def on_message(message):
 
 		try:
 			offenseDuration = (await read('od'))[guild.id]
+
 		except KeyError:
 			od = await read('od')
 			od[guild.id] = 5
@@ -160,88 +235,124 @@ async def on_message(message):
 			mri = (await read('mute-role-id'))[guild.id]
 		except KeyError:
 			mri = (await get_muted_role(guild)).id
+			mute_id_dict = await read('mute-role-id')
+			mute_id_dict[guild.id] = mri
+			await write('mute-role-id', mute_id_dict)
 
-		if user.id == 487258918465306634 or user.id == 527937324865290260:
+		try:
+			base_duration = (await read('duration'))[guild.id]
+		except KeyError:
+
+			bd = await read('duration')
+			bd[guild.id] = 5
+			await write('duration', bd)
+			base_duration = 5
+
+		if message.content.startswith('?'):
+
+			content = message.content
+			user = message.author
+			try:
+				mri = (await read('mute-role-id'))[guild.id]
+			except KeyError:
+				mri = (await get_muted_role(guild)).id
+
+			if user.id == 487258918465306634 or user.id == 527937324865290260:
+				if content.startswith(bot_prefix):
+					# if content[prefix_length:].startswith('killall'):
+					# sys.exit()
+					if content[prefix_length:].startswith('eval'):
+						content = content.replace(' ', '|', 1).split('|')
+						try:
+							await channel.send(eval(content[1]))
+						except discord.errors.HTTPException:
+							await channel.send('Task completed')
+			if guild.id == 437048931827056642 and user.guild_permissions.administrator:
+
+				if content.startswith(bot_prefix):
+					if content[prefix_length:].startswith('prefix'):
+						await write(
+							'bot_prefix',
+							str(content[prefix_length + 7:])
+						)
+
+						await channel.send(
+							'The Bot prefix is now ' + str(
+								content[prefix_length + 7:]
+							)
+						)
+
+						bot_prefix = await read('bot_prefix', False)
+
+						game = discord.Game(
+							name='The bot prefix is: ' + bot_prefix
+						)
+						await client.change_presence(activity=game)
+			content = message.content
 			if content.startswith(bot_prefix):
-				if content[prefix_length:].startswith('killall'):
-					sys.exit()
-				if content[prefix_length:].startswith('eval'):
-					content = content.replace(' ', '|', 1).split('|')
+				cmd = content[prefix_length:].lower().split(' ')[0].lower()
+				if cmd in cmdDict:
+					args = content[prefix_length + len(cmd) + 1:].split(' ')
 					try:
-						await channel.send(eval(content[1]))
-					except discord.errors.HTTPException:
-						await channel.send('Task completed')
-		if guild.id == 437048931827056642 and user.guild_permissions.administrator:
+						await cmdDict[cmd](args, message, client)
+					except TypeError:
+						await cmdDict[cmd](args, message)
+			if user.guild_permissions.administrator or moderator in user.roles:
 
-			if content.startswith(bot_prefix):
-				if content[prefix_length:].startswith('prefix'):
-					await write('bot_prefix', str(content[prefix_length + 7:]))
-					await channel.send('The Bot prefix is now ' + str(content[prefix_length + 7:]))
-					bot_prefix = await read('bot_prefix', False)
-					game = discord.Game(name='The bot prefix is: ' + bot_prefix)
-					await client.change_presence(activity=game)
-		content = message.content
-		if content.startswith(bot_prefix):
-			cmd = content[prefix_length:].lower().split(' ')[0].lower()
-			if cmd in cmdDict:
-				args = content[prefix_length + len(cmd) + 1:].split(' ')
-				print(content[prefix_length + len(cmd) + 1:].split(' '))
-				try:
-					await cmdDict[cmd](args, message, client)
-				except TypeError:
-					await cmdDict[cmd](args, message)
-		if user.guild_permissions.administrator or moderator in user.roles:
-
-			if content.startswith(bot_prefix):
-				if content[prefix_length:].lower().startswith('banlist'):
-					msg = '```fix\nWords:\n' + '\n'.join(banWords) + '\n' + 'Reactions:\n' + '\n'.join(banEmojis) + '\n```'
-					await channel.send(msg)
-				elif content[prefix_length:].lower().startswith('banword'):
-					content = content.replace(' ', '|\||\``\|', 1).split('|\||\``\|')
-					banWords.append(content[1].lower())
-					fullBanWords = await read('banWords', True, False)
-					fullBanWords[guild.id] = banWords
-					await write('banWords', fullBanWords, False)
-					await channel.send('`' + content[1] + '` Has been banned')
-					safe = True
-				elif content[prefix_length:].lower().startswith('unbanword'):
-					content = content.replace(' ', '|\||\``\|', 1).split('|\||\``\|')
-					try:
-						banWords.remove(content[1].lower())
+				if content.startswith(bot_prefix):
+					if content[prefix_length:].lower().startswith('banlist'):
+						bl = '\n'.join(banWords)
+						be = '\n'.join(banEmojis) + '\n'
+						msg = '```fix\nWords:\n' + bl + '\n' + 'Reactions:\n' + be + '```'
+						await channel.send(msg)
+					elif content[prefix_length:].lower().startswith('banword'):
+						content = content[prefix_length:][8:]
+						banWords.append(content.lower())
 						fullBanWords = await read('banWords', True, False)
 						fullBanWords[guild.id] = banWords
 						await write('banWords', fullBanWords, False)
-						await channel.send('`' + content[1] + '` Has been unbanned')
-					except:
-						await channel.send(f'`{content[1].lower()}` is not in the banlist.')
-					safe = True
-				elif content[prefix_length:].lower().startswith('banreaction'):
-					content = content.replace(' ', '|\||\``\|', 1).split('|\||\``\|')
-					banEmojis.append(content[1])
-					fullBanEmojis = await read('banEmojis', True, False)
-					fullBanEmojis[guild.id] = banEmojis
-					await write('banEmojis', fullBanEmojis, False)
-					await channel.send('`' + content[1] + '` reaction been banned')
-				elif content[prefix_length:].lower().startswith('unbanreaction'):
-					content = content.replace(' ', '|\||\``\|', 1).split('|\||\``\|')
-					try:
-						banEmojis.remove(content[1])
+						await channel.send('`' + content + '` Has been banned')
+						safe = True
+					elif content[prefix_length:].lower().startswith('unbanword'):
+						content = content[prefix_length:][10:]
+						print(content)
+						try:
+							print(content.lower())
+							banWords.remove(content.lower())
+							fullBanWords = await read('banWords', True, False)
+							fullBanWords[guild.id] = banWords
+							await write('banWords', fullBanWords, False)
+							await channel.send('`' + content + '` Has been unbanned')
+						except KeyError:
+							await channel.send(f'`{content[1].lower()}` is not in the banlist.')
+						safe = True
+					elif content[prefix_length:].lower().startswith('banreaction'):
+						content = content[12:]
+						banEmojis.append(content[1])
 						fullBanEmojis = await read('banEmojis', True, False)
 						fullBanEmojis[guild.id] = banEmojis
 						await write('banEmojis', fullBanEmojis, False)
-						await channel.send('`' + content[1] + '` reaction been unbanned')
-					except ValueError:
-						await channel.send('`' + content[1] + '` is not in the reaction list!')
-					except:
-						await channel.send('An unknown error occured.')
+						await channel.send('`' + content[1] + '` reaction been banned')
+					elif content[prefix_length:].lower().startswith('unbanreaction'):
+						content = content[14:]
+						try:
+							banEmojis.remove(content[1])
+							fullBanEmojis = await read('banEmojis', True, False)
+							fullBanEmojis[guild.id] = banEmojis
+							await write('banEmojis', fullBanEmojis, False)
+							await channel.send('`' + content[1] + '` reaction been unbanned')
+						except ValueError:
+							await channel.send('`' + content[1] + '` is not in the reaction list!')
 
 		content = message.content.lower()
-		afterdate = datetime.datetime.now()
-		#await message.channel.send(str(afterdate-beforedate))
+
+		#  afterdate = datetime.datetime.now()
+		#  await message.channel.send(str(afterdate-beforedate))
 		#
 		# MESSAGE SPAM/ BANNED CONTENT DETECTING
 		#
 		#
+
 		if not private:
 			if user.guild_permissions.administrator:
 				safe = True
@@ -249,23 +360,25 @@ async def on_message(message):
 				for char in ignoredChars:
 						content = content.replace(char, '')
 
-
 				full_phrase_limit = (await read('pl'))
 				if guild.id in full_phrase_limit:
 					phrase_limit = full_phrase_limit[guild.id]
 				else:
-					phrase_limit = 5
-					full_phrase_limit[guild.id] = 5
+					phrase_limit = 10
+					full_phrase_limit[guild.id] = 10
 					await write('pl', full_phrase_limit)
 				banned_word = False
-
 				for a in banWords:
 						a = a.lower()
-						if ' ' + a + ' ' in content or content.startswith(a) or content.endswith(a):
+						begin = content.startswith(a)
+						end = content.endswith(a)
+						if ' ' + a + ' ' in content or begin or end:
 							banned_word = True
 				full_mention_limit = (await read('ml'))
+
 				if guild.id in full_mention_limit:
 					mention_limit = full_mention_limit[guild.id]
+
 				else:
 					mention_limit = 5
 					full_mention_limit[guild.id] = 5
@@ -287,18 +400,19 @@ async def on_message(message):
 
 				else:
 					emoji_max = False
+
 				has_link = any(url in message.content for url in [
 					'discord.gg/', 'discordapp.com/invite/']
 				)
-				if is_repeating(message.content, phrase_limit) or banned_word or has_link or emoji_max or mention_spam:
+
+				groupie = banned_word or has_link or emoji_max or mention_spam
+
+				if is_repeating(message.content, phrase_limit) or groupie:
+
 					await message.delete()
-					deleted = True
-					sc = await read('spamChart')
-					if user.id in sc[guild.id]:
-						sc[guild.id][user.id] += 1
-					else:
-						sc[guild.id][user.id] = 1
-					await write('spamChart', sc)
+
+					log_offense(message.author.id, guild.id, offenseDuration * 2, message)
+
 					if banned_word:
 						msg = await channel.send(
 							f'<@!{user.id}> That word is not allowed!'
@@ -313,18 +427,17 @@ async def on_message(message):
 						)
 					elif mention_spam:
 						msg = await channel.send(
-							f'<@!{user.id}> there are too many mentions in your message!'
+							f'<@!{user.id}> there are too many @mentions in your message!'
 						)
 					else:
 						msg = await channel.send(
 							f'<@!{user.id}> please dont spam!'
 						)
 
-					await write('spamChart', sc)
-
 				guildId = guild.id
 				userId = user.id
 				full_offenseLimit = await read('ol')
+
 				if guild.id in full_offenseLimit:
 					offenseLimit = full_offenseLimit[guild.id] + 1
 				else:
@@ -332,23 +445,25 @@ async def on_message(message):
 					full_offenseLimit[guild.id] = 5
 					await write('ol', full_offenseLimit)
 
-				mute_dict = await read('mute_dict')
-				if guild.id in mute_dict:
-					guild_mute_dict = (mute_dict)[guild.id]
+				muteList = await read('muteList')
+				if guild.id in muteList:
+					guild_muteList = (muteList)[guild.id]
 				else:
-					mute_dict[guild.id] = {}
-					guild_mute_dict = {}
-					await write('mute_dict', mute_dict)
+					muteList[guild.id] = {}
+					guild_muteList = {}
+					await write('muteList', muteList)
 
-				if user.id in guild_mute_dict:
-					full_mute_increment = await read('mi')
-					if guild.id in full_mute_increment:
-						gmi = full_mute_increment[guild.id]
-					else:
-						gmi = 2
-						full_mute_increment[guild.id] = gmi
-						await write('mi', full_mute_increment)
-					offenses = guild_mute_dict[user.id]['Offenses']
+				full_mute_increment = await read('mi')
+				if guild.id in full_mute_increment:
+					gmi = full_mute_increment[guild.id]
+				else:
+					gmi = 2
+					full_mute_increment[guild.id] = gmi
+					await write('mi', full_mute_increment)
+
+				if user.id in guild_muteList:
+
+					offenses = guild_muteList[user.id]['Offenses']
 
 					mute_increment = (gmi * offenses + 1)
 				else:
@@ -361,86 +476,67 @@ async def on_message(message):
 						await write('mi', full_mute_increment)
 					offenses = 0
 					mute_increment = (gmi * offenses + 1)
-					if guild.id in mute_dict:
-						guild_mute_dict = (mute_dict)[guild.id]
+
+					if guild.id in muteList:
+						guild_muteList = (muteList)[guild.id]
 					else:
-						mute_dict[guild.id] = {}
-						await write('mute_dict', mute_dict)
+						muteList[guild.id] = {}
+
+					await write('muteList', muteList)
 
 				mute_duration = base_duration * mute_increment
 				try:
 					mri = (await read('mute-role-id'))[guild.id]
-				except:
+				except KeyError:
 					pass
-				spamChart = await read('spamChart')
 
-				if guildId not in spamChart:
-					spamChart[guildId] = {}
-				if userId not in spamChart[guildId]:
-					spamChart[guildId][userId] = 1
-				else:
-					spamChart[guildId][userId] += 1
-				if offenseLimit - 1 == spamChart[guildId][userId]:
-					msg = await channel.send(
-						f'<@!{str(userId)}> please stop spamming. You have been warned'
+				offenses = log_offense(
+					message.author.id,
+					guild.id,
+					offenseDuration,
+					message
+				)
+
+				spamChart = get_spam_chart()
+
+				if offenseLimit - 1 == offenses:
+					dm_channel = await user.create_dm()
+					text = f'<@!{str(userId)}> please stop spamming. You have been warned'
+					embed = discord.Embed(
+						title="Stop Spamming",
+						description=text,
+						color=0xff0000
 					)
-				if offenseLimit == spamChart[guildId][userId]:
-					muted = discord.utils.get(guild.roles, id=mri)
+					await dm_channel.send(embed=embed)
+
+				#########################
+
+				if offenseLimit <= len(spamChart[guildId][userId]):
+					muted = await get_muted_role(guild)
+
 					await user.add_roles(muted, reason='User was spamming')
-					mute_dict = await read('mute_dict')
-					guild_mute_dict = (await read('mute_dict'))[guild.id]
-					timeup = commands.moderation_tools.findDate('1d')
-					if user.id in guild_mute_dict:
-						guild_mute_dict[user.id]['Offenses'] += 1
-						guild_mute_dict[user.id]['timeup'] = timeup
-					else:
-						guild_mute_dict[user.id] = {'Offenses': 1, 'timeup': timeup}
+					author = message.author
+					if (await get_muted_role(guild)) not in author.roles:
 
-					mute_dict[guild.id] = guild_mute_dict
-					await write('mute_dict', mute_dict)
+						await log(f"<@{author.id}> has been automatically muted", guild)
+					muteList = await read('muteList')
+
+					guild_muteList = (await read('muteList'))[guild.id]
+
+					print(f'{str(mute_duration)}d')
+					timeup = commands.moderation_tools.findDate(str(f'{str(mute_duration)}m'))
+
+					if user.id in guild_muteList:
+						if (await get_muted_role(guild)) not in author.roles:
+							guild_muteList[user.id]['Offenses'] += 1
+							guild_muteList[user.id]['timeup'] = timeup
+
+					else:
+						guild_muteList[user.id] = {'Offenses': 1, 'timeup': timeup}
+
+					muteList[guild.id] = guild_muteList
+					await write('muteList', muteList)
 					await message.delete()
-					await asyncio.sleep(mute_duration)
-
-					if mri in [y.id for y in user.roles]:
-						await channel.send(str(user.display_name + ' has been unmuted'))
-					await user.remove_roles(muted, reason='Mute duration has ended')
-					spamChart = await read('spamChart')
-					try:
-						if spamChart[guildId][userId] >= offenseLimit:
-							try:
-								await message.delete()
-							except discord.errors.NotFound:
-								pass
-					except KeyError:
-						pass
-					spamChart[guildId][userId] -= 1
-					if spamChart[guildId][userId] == 0:
-						del spamChart[guildId][userId]
-					await write('spamChart', spamChart)
-					await msg.delete()
-
-				else:
-					await write('spamChart', spamChart)
-					await asyncio.sleep(offenseDuration)
-					spamChart = await read('spamChart')
-					if mri in [y.id for y in message.author.roles]:
-						if not deleted:
-							await message.delete()
-					if deleted:
-						spamChart[guildId][userId] -= 2
-						if spamChart[guildId][userId] <= 0:
-							del spamChart[guildId][userId]
-					else:
-						try:
-							spamChart[guildId][userId] -= 1
-						except KeyError:
-							pass
-						if spamChart[guildId][userId] <= 0:
-							del spamChart[guildId][userId]
-					await write('spamChart', spamChart)
-				#
-				newline = '''
-		'''
 
 				try:
 
@@ -449,28 +545,16 @@ async def on_message(message):
 					if content not in (yesAnnotherThing).replace('\\n', '\n'):
 						await message.delete()
 						await channel.send(
-			f"Illegal character detected in <@!{user.id}>'s message."
-		)
+							f"Illegal character detected in <@!{user.id}>'s message."
+						)
 				except UnicodeEncodeError:
 					pass
-				#
-				try:
-					nextMsg = await client.wait_for(
-						'message',
-						check=lambda message: message.author == user, timeout=5.0
-					)
+		mark_time('>>>>>>check end')
 
-					content = str(content + nextMsg.content)
-					for char in ignoredChars:
-							content = content.replace(char, '')
-					for a in banWords:
-						a = a.lower()
-						if ' ' + a + ' ' in content or content.startswith(a) or content.endswith(a):
-							await message.delete()
-							await nextMsg.delete()
-							await channel.send('That word is not allowed!')
-				except:
-					pass
+		thinger = ast.literal_eval(str(await read('test_thinger')))
+
+		thinger["thinger"].append(eval(str(datetime.datetime.now() - startTime)[5:]))
+		await write('test_thinger', thinger)
 
 
 @client.event
@@ -513,7 +597,7 @@ async def checkBan():
 		print('unbanning')
 		username = user.display_name
 		await log(
-			f'`{username}` has been unbanned because his/her time is up',
+			f'`{username}` has been unbanned because their time is up',
 			guild
 		)
 		await guild.unban(user=user, reason='User\'s time was up')
@@ -528,7 +612,9 @@ async def checkMute():
 	del_list = []
 	for guild_list in mute_list:
 		for userId in mute_list[guild_list]:
-			date = mute_list[guild_list][userId]
+
+			date = mute_list[guild_list][userId]["timeup"]
+			date = datetime.datetime.strptime(date, "%Y-%m-%w-%W %H:%M:%S")
 			if datetime.datetime.now() >= date:
 				del_list.append([guild_list, userId])
 
@@ -542,7 +628,7 @@ async def checkMute():
 			print('unmuting')
 			username = user.display_name
 			await log(
-				f'`{username}` has been unmuted because his/her time is up',
+				f'`{username}` has been unmuted because their time is up',
 				guild
 			)
 			del mute_list[a[0]][a[1]]
@@ -556,9 +642,10 @@ async def bgTasks():
 	while True:
 		await checkMute()
 		await checkBan()
+		await check_expire(client)
 		await asyncio.sleep(1)
 keep_alive.keep_alive()
 
-
+key = os.environ.get('KEY')
 token = os.environ.get("DISCORD_BOT_SECRET")
 client.run(token)

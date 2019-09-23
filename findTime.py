@@ -6,6 +6,7 @@ timeList = [
     'mo'
 ]
 
+
 def findTime(string):
     global timeList
     if string[-1] in timeList:

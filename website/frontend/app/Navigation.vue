@@ -10,7 +10,7 @@ export default {
   name: "Navigation",
   methods: {
     s(e) {
-        // ugh
+      // ugh
       const route = e.$el.attributes.p.nodeValue;
       this.$router.push(route);
     }

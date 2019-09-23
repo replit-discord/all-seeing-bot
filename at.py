@@ -1,5 +1,3 @@
-
-
 def argTest(types, args):
     correct = True
     for a in range(len(types)):
