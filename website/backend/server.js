@@ -55,6 +55,5 @@ app.get("/callback/success", checkAuth, (req, res) => {
   res.send(req.user);
 });
 
-
 const port = process.env.PORT || 3000;
 http.createServer(app).listen(port).on("listening", () => console.log("start"));
