@@ -1,5 +1,7 @@
 import discord
 import io
+import sys
+import traceback
 from at import argTest
 from rw import read, write
 from checkTrust import checkTrust
@@ -58,22 +60,43 @@ def execute(_code, loc):
 	return globs['__ex']()
 
 
-async def Execute(args, msg):
+async def Execute(args, msg, client):
 	author = msg.author
 	if author.id == 527937324865290260 or author.id == 487258918465306634:
-		f = io.StringIO()
-		with redirect_stdout(f):
-			command = msg.content.split(None, 1)[1]
-			await execute(command, locals())
-		out = f.getvalue()
-		if out == '':
-			out = 'No output.'
-		await msg.channel.send(
-			embed=discord.Embed(
-				title='Unsafe Eval',
-				description=out
-			)
-		)
+
+		try:
+			f = io.StringIO()
+			with redirect_stdout(f):
+				command = msg.content.split(None, 1)[1]
+
+				await execute(command, locals())
+			out = f.getvalue()
+			error = False
+		except Exception:
+
+			traceback_message = traceback.format_exc()
+			out = sys.exc_info()
+			done_oof = True
+		if out != '':
+			if not done_oof:
+				await msg.channel.send(
+					embed=discord.Embed(
+						title='Unsafe Eval',
+						description=out
+					)
+				)
+			else:
+
+				e_type, e_msg = str(out[0])[8:][:-2], traceback_message
+				await msg.channel.send(
+					embed=discord.Embed(
+						title=f"**{e_type}**",
+						description=f'```py\n{e_msg}\n```',
+						color=0xff0000
+					).set_footer(text='Uh oh, you made an oopsie!')
+				)
+		else:
+			await msg.channel.send('Task completed')
 
 
 async def trust_role(args, msg):

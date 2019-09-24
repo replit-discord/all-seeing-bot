@@ -7,7 +7,9 @@ app = Flask('')
 
 @app.route('/')
 def home():
-		return '<h1>Im in</h1><p> Yay! edwin is making me a website! 🦊</p>'
+		return '''<a href="https://discordbots.org/bot/610205862090244106" >
+	<img src="https://discordbots.org/api/widget/610205862090244106.svg" alt="AllSeeingBot" />
+</a>'''
 
 
 def run():

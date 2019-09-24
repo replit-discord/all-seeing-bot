@@ -1,6 +1,8 @@
 import commands.data_tweaking
 import commands.Help
 import commands.moderation_tools
+import commands.fun
+
 cmdDict = {
 	'muteduration': commands.data_tweaking.set_duration,
 	'offenseduration': commands.data_tweaking.offense_time,
@@ -28,5 +30,7 @@ cmdDict = {
 	'removewarn': commands.moderation_tools.remove_warn,
 	'modmail': commands.data_tweaking.mail_channel,
 	'muterole': commands.data_tweaking.mute_role,
-	'exec': commands.data_tweaking.Execute
+	'exec': commands.data_tweaking.Execute,
+	'execute': commands.data_tweaking.Execute,
+	'roll': commands.fun.roll
 }

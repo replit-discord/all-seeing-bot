@@ -4,3 +4,4 @@ asyncio
 motor
 emoji
 cryptography
+dnspython==1.16.0

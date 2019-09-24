@@ -3,17 +3,13 @@ import discord
 import os
 import asyncio
 import keep_alive
-import sys
-import ast
 from dm_message import mod_mail
 from rw import read, write
 from cmdDict import cmdDict
-from content_check import banned_content_check
+from content_check import banned_content_check, ignoredChars
 from phrase_spam import is_repeating
-from encryption_tools import decode
 import commands.moderation_tools
 from checkTrust import checkTrust
-from cryptography.fernet import Fernet
 from emojiCheck import count as emoji_count
 from commands.moderation_tools import findDate
 from role_find import get_muted_role
@@ -72,37 +68,41 @@ async def on_member_join(member):
 
 	guild = member.guild
 	log_dict = await read('al')
-	action_log_id = log_dict[guild.id]
-	log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
-	username = member.display_name
-	perma_list = await read('permaMute')
-	if guild.id in perma_list:
-		guild_perma_list = perma_list[guild.id]
-		if member.id in guild_perma_list:
-			muted_role = await get_muted_role(guild)
-			await member.add_roles(
-				muted_role,
-				reason='User was permanately muted.'
-				'Role automatically given when they joined.'
-			)
+	if guild.id in log_dict:
+		action_log_id = log_dict[guild.id]
+		log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
+		username = member.display_name
+		perma_list = await read('permaMute')
+		if guild.id in perma_list:
+			guild_perma_list = perma_list[guild.id]
+			if member.id in guild_perma_list:
+				muted_role = await get_muted_role(guild)
+				await member.add_roles(
+					muted_role,
+					reason='User was permanately muted.'
+					'Role automatically given when they joined.'
+				)
 
-			await log_channel.send(
-				f'`{username}` was given the mute role because they were'
-				'muted permanately when they left the server.'
-			)
+				await log_channel.send(
+					f'`{username}` was given the mute role because they were'
+					'muted permanately when they left the server.'
+				)
 
-	guild_mute_list = (await read('muteList'))[guild.id]
-	if member.id in guild_mute_list:
-		muted_role = await get_muted_role(guild)
-		await member.add_roles(
-			muted_role,
-			reason='User\'s mute time is not up yet. They were muted again so they'
-			'can\'t evade mute.'
-		)
-		await log_channel.send(
-			f'`{username}` was given the mute role because they were'
-			'muted muted before they left the server, and their duration is not up.'
-		)
+		mute_list = await read('muteList')
+		if guild.id in mute_list:
+			guild_mute_list = mute_list[guild.id]
+
+			if member.id in guild_mute_list:
+				muted_role = await get_muted_role(guild)
+				await member.add_roles(
+					muted_role,
+					reason='User\'s mute time is not up yet. They were muted again so they'
+					'can\'t evade mute.'
+				)
+				await log_channel.send(
+					f'`{username}` was given the mute role because they were'
+					'muted muted before they left the server, and their duration is not up.'
+				)
 
 
 @client.event
@@ -119,7 +119,7 @@ async def on_message_edit(before, after):
 					description=text,
 					color=0x345beb
 				)
-				
+
 				log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
 				try:
 					await log_channel.send(embed=log_embed)
@@ -549,7 +549,8 @@ async def on_message(message):
 				try:
 					print(repr(content))
 
-					content = content.replace("'", '')
+					for character in ignoredChars:
+						content = content.replace(character, '')
 					yesAnnotherThing = str(repr(content).encode('ascii'))
 
 					if content not in (yesAnnotherThing).replace('\\n', '\n'):
