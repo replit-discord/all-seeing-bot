@@ -21,7 +21,7 @@ export default {
     extensions: [".vue", ".ts", ".js"]
   },
   devServer: {
-    port: 9090,
+    port: 8080,
     compress: true,
     historyApiFallback: true,
     proxy: {

@@ -1,8 +1,14 @@
+# node
 node_modules/
 
-dist/
+# python
+venv/
 
-*.log
-
+# ide
 .idea/
 .code/
+
+# misc
+dist/
+*.log
+.env
