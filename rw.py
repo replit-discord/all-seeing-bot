@@ -5,9 +5,9 @@ import motor.motor_asyncio
 
 mongo_link = os.getenv('mlab_link') + '?retryWrites=false'
 client = motor.motor_asyncio.AsyncIOMotorClient(mongo_link)
-db = client.Data
+db = client.asb_dev
 main_collection = db.main_collection
-print(main_collection.find_one(), 'hi')
+
 key = os.environ.get('KEY')
 
 

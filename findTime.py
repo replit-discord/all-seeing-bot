@@ -24,4 +24,4 @@ def findTime(string):
             time = 2629746 * duration
     else:
         time = 60 * int(string)
-    return float(time)
+    return int(time)

@@ -71,7 +71,7 @@ async def Execute(args, msg, client):
 
 				await execute(command, locals())
 			out = f.getvalue()
-			error = False
+			done_oof = False
 		except Exception:
 
 			traceback_message = traceback.format_exc()

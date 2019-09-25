@@ -29,8 +29,7 @@ suffixes = [
 	'er',
 	'it',
 	'hat',
-	'wipe',
-	'es'
+	'wipe'
 	''
 ]
 
