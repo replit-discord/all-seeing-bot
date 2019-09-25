@@ -32,5 +32,6 @@ cmdDict = {
 	'muterole': commands.data_tweaking.mute_role,
 	'exec': commands.data_tweaking.Execute,
 	'execute': commands.data_tweaking.Execute,
-	'roll': commands.fun.roll
+	'roll': commands.fun.roll,
+	'statroll': commands.fun.statroll
 }
