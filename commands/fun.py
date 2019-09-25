@@ -2,7 +2,9 @@ import discord
 import asyncio
 from random import randint
 helpText = '''
-**`roll: <amount>d<sides>`** Gets the combined total of <amount> dice with <sides> sides.
+**`roll: <amount>d<sides>`**  Gets the combined total of <amount> dice with <sides> sides.
+
+**`statroll`**  Rolls DnD stats for you.
 '''
 helpMsg = discord.Embed(
 	title="Fun",
@@ -59,12 +61,29 @@ async def statroll(args, msg):
 				results.append(randint(2, 6))
 
 			results = sorted(results)
-			results.remove(results[-1])
+
+			results.remove(results[0])
 			value = 0
+
 			for a in results:
 				value += a
-			print(value)
 
+			stats.append(value)
+
+		content = '`, `'.join([str(stat) for stat in stats])
+
+		embed = discord.Embed(
+			title="**Results:**",
+			description=f'You got `{content}`!',
+			color=0x9736ff
+		)
+
+		embed.set_footer(
+			text='Should I make a command to re-roll stats?'
+			'email feedback@allseeingbot.com to submit your suggestion'
+		)
+
+		await channel.send(embed=embed)
 
 	else:
-		await channel.send(f'<@{author.id}> this command takes no arguments')
+		await channel.send(f'<@{author.id}> this command takes no arguments.')
