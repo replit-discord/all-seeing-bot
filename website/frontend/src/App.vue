@@ -11,7 +11,6 @@
 
 <script lang="ts">
 import Navigation from "./Navigation";
-import f from "./charlie";
 
 export default {
   name: "App",
@@ -20,7 +19,6 @@ export default {
   },
   mounted() {
     console.log("mounted");
-    console.log(f);
   }
 };
 </script>
