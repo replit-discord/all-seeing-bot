@@ -9,16 +9,13 @@
   </el-container>
 </template>
 
-<script lang="ts">
+<script>
 import Navigation from "./Navigation";
 
 export default {
   name: "App",
   components: {
     "navigation": Navigation
-  },
-  mounted() {
-    console.log("mounted");
   }
 };
 </script>

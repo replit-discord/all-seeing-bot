@@ -10,14 +10,6 @@
     </section>
 
     <section>
-      <h3>sensitivity</h3>
-      <div>
-        <span class="demonstration">Customized initial value</span>
-        <el-slider style="width: 300px; margin-left: 10px;" v-model="sliderValue"></el-slider>
-      </div>
-    </section>
-
-    <section>
       <h3>selections</h3>
       <el-switch
         v-model="switchValue"
@@ -63,7 +55,6 @@ export default {
 
     return {
       radioValue: "a",
-      sliderValue: "50",
       switchValue: true,
       transferData: generateData(),
       transferValue: [1, 4],

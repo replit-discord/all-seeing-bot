@@ -8,7 +8,9 @@
     <section>
       <h2>to false you must be authentiacted</h2>
       <div v-if="!isSignedIn">
-        <el-button type="primary" >Sign In</el-button>
+        <a href="https://discordapp.com/oauth2/authorize?client_id=585606487372464215&redirect_uri=http%3A%2F%2Flocalhost%3A3000/callback&response_type=code&scope=identify%20guilds.join" target="__blank">
+          <el-button type="primary">Sign In</el-button>
+        </a>
       </div>
     </section>
   </div>

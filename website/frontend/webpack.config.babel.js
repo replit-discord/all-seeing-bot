@@ -24,14 +24,17 @@ export default {
     port: 8081,
     compress: true,
     historyApiFallback: true,
+    progress: true,
     proxy: {
-      "/api": "http://localhost:8082"
+      "/api": "http://localhost:3000",
+      "/is-authenticated": "http://localhost:3000",
+      "/user": "http://localhost:3000"
     }
   },
   module: {
     rules: [
       {
-        test: /\.(ts|js)$/,
+        test: /\.(js)$/,
         loader: "babel-loader",
         exclude: /node_modules/
       },
