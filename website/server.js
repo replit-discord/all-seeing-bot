@@ -5,10 +5,12 @@ import dotenv from "dotenv";
 import express from "express";
 import hbs from "hbs";
 import session from "express-session";
-import passport from "passport"
-import passportDiscord from "passport-discord"
+import passport from "passport";
+import passportDiscord from "passport-discord";
 
-import dashboardRoutes from "./routes/dashboardRoutes"
+import rootRoutes from './routes/rootRoutes';
+import dashboardRoutes from "./routes/dashboardRoutes";
+import authRoutes from "./routes/authRouter";
 import { checkAuth } from "./middleware";
 
 // dotenv
@@ -26,7 +28,7 @@ app.disable("x-powered-by");
 app.engine("hbs", hbs.__express);
 hbs.registerPartials(join(__dirname, "views", "partials"));
 hbs.registerPartials(join(__dirname, "views", "components"));
-// hbs.localsAsTemplateData(app);
+hbs.localsAsTemplateData(app);
 app.use("/", express.json());
 
 // session
@@ -53,14 +55,13 @@ passport.use(new passportDiscord.Strategy({
 }));
 
 // app
-app.use("/", express.static("public"));
-
-app.get("/", (req, res) => res.redirect("/dashboard"));
-app.use("/dashboard", dashboardRoutes);
+app.use(express.static("public"));
+app.use("/", rootRoutes);
+app.use("/dashboard", checkAuth, dashboardRoutes);
+app.use("/auth", authRoutes);
 
 app.get("/user", checkAuth, (req, res) => {
   const status = !!req.user;
-
   if(status) {
     res.statusCode = 200;
     res.send(req.user);
@@ -69,7 +70,6 @@ app.get("/user", checkAuth, (req, res) => {
     res.statusCode = 401;
     res.end();
   }
-
 });
 
 // listen

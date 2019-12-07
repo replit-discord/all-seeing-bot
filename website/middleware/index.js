@@ -8,9 +8,9 @@ export function checkAuth(req, res, next) {
 
   if (req.isAuthenticated()) {
     console.log(`'${req.user}' completed auth flow`);
-    return next();
+    next();
   }
 
   res.statusCode = 401;
-  res.end("not logged in");
+  res.redirect("/not-signed-in");
 }
