@@ -1,9 +1,0 @@
-{
-  "presets": [
-    "@babel/env"
-  ],
-  "plugins": [
-    "@babel/proposal-numeric-separator",
-    "@babel/proposal-optional-chaining"
-  ]
-}
