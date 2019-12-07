@@ -1,42 +1,31 @@
 {
+<<<<<<< HEAD:website/frontend/package.json
   "name": "all-seeing-bot-frontend",
   "private": true,
   "version": "1.0.0",
   "license": "MIT",
   "main": "index.js",
+=======
+  "name": "all-seeing-bot-website",
+  "private": true,
+  "version": "0.1.0",
+  "main": "server.js",
+>>>>>>> feat/frontend-control:website/package.json
   "scripts": {
-    "build": "cross-env NODE_ENV=production webpack",
-    "serve": "cross-env NODE_ENV=development webpack-dev-server"
+    "serve": "cross-env NODE_ENV=development nodemon -e html,css,js,hbs -r esm server.js",
+    "start": "cross-env NODE_ENV=production node -r esm server.js"
   },
   "devDependencies": {
-    "@babel/core": "^7.5.5",
-    "@babel/preset-env": "^7.5.5",
-    "@babel/preset-typescript": "^7.3.3",
-    "@babel/register": "^7.5.5",
-    "@babel/plugin-proposal-numeric-separator": "^7.2.0",
-    "autoprefixer": "^9.6.1",
-    "babel-loader": "^8.0.6",
-    "cross-env": "^5.2.0",
-    "css-loader": "^3.2.0",
-    "file-loader": "^4.2.0",
-    "html-webpack-plugin": "^3.2.0",
-    "mini-css-extract-plugin": "^0.8.0",
-    "postcss": "^7.0.17",
-    "postcss-loader": "^3.0.0",
-    "postcss-preset-env": "^6.7.0",
-    "postcss-simple-vars": "^5.0.2",
-    "sass-resources-loader": "^2.0.1",
-    "style-loader": "^1.0.0",
-    "typescript": "^3.5.3",
-    "vue": "^2.6.10",
-    "vue-loader": "^15.7.1",
-    "vue-router": "^3.1.2",
-    "vue-template-compiler": "^2.6.10",
-    "webpack": "^4.39.2",
-    "webpack-cli": "^3.3.7",
-    "webpack-dev-server": "^3.8.0"
+    "nodemon": "^1.19.2"
   },
   "dependencies": {
-    "element-ui": "^2.11.1"
+    "cross-env": "^6.0.0",
+    "dotenv": "^8.1.0",
+    "esm": "^3.2.25",
+    "express": "^4.17.1",
+    "express-session": "^1.16.2",
+    "hbs": "^4.0.6",
+    "passport": "^0.4.0",
+    "passport-discord": "^0.1.3"
   }
 }

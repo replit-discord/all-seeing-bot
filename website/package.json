@@ -1,0 +1,21 @@
+{
+  "name": "all-seeing-bot-website",
+  "version": "0.0.0",
+  "main": "server.js",
+  "scripts": {
+    "serve": "nodemon -e html,css,js,hbs -r esm server.js",
+    "start": "node -r esm server.js"
+  },
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "esm": "^3.2.25",
+    "express": "^4.17.1",
+    "express-session": "^1.17.0",
+    "hbs": "^4.0.6",
+    "passport": "^0.4.0",
+    "passport-discord": "^0.1.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.1"
+  }
+}
