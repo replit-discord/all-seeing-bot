@@ -5,12 +5,16 @@ export function homeController(req, res) {
     avatar: req.user.avatar,
     discriminator: req.user.discriminator,
     mfa_enabled: req.user.mfa_enabled,
-    guilds: req.user.guilds
+    guilds: req.user.guilds,
+
+    tabHome: "not-false"
   });
 }
 
 export function profileController(req, res) {
   res.render("pages/dashboardProfile", {
-    username: req.user.username
+    username: req.user.username,
+
+    tabProfile: "not-false"
   })
 }
