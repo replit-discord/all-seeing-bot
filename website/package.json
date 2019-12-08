@@ -3,10 +3,12 @@
   "version": "0.0.0",
   "main": "server.js",
   "scripts": {
-    "serve": "nodemon -e html,css,js,hbs -r esm server.js",
-    "start": "node -r esm server.js"
+    "serve": "cross-env NODE_ENV=development nodemon -e html,css,js,hbs -r esm server.js",
+    "start": "cross-env NODE_ENV=production node -r esm server.js"
   },
   "dependencies": {
+    "chalk": "^3.0.0",
+    "cross-env": "^6.0.3",
     "dotenv": "^8.2.0",
     "esm": "^3.2.25",
     "express": "^4.17.1",

@@ -40,6 +40,7 @@ app.use(session({
 }));
 
 // passport
+const callbackURL = process.env.NODE_ENV === "development" ? "http://localhost:3000/auth/callback" : "https://allseeingbot.com/auth/callback";
 app.use(passport.initialize());
 app.use(passport.session());
 passport.serializeUser((user, done) => done(null, user));
@@ -47,8 +48,8 @@ passport.deserializeUser((obj, done) => done(null, obj));
 passport.use(new passportDiscord.Strategy({
   clientID: process.env.CLIENT_ID,
   clientSecret: process.env.CLIENT_SECRET,
-  callbackURL: "http://localhost:3000/callback",
-  scope: ["identify", "guild", "guilds.join"]
+  callbackURL: callbackURL,
+  scope: ["identify", "guilds"]
 }, (accessToken, refreshToken, profile, cb) => {
   // console.log(accessToken, refreshToken, profile, cb);
   cb(null, profile);
@@ -59,18 +60,6 @@ app.use(express.static("public"));
 app.use("/", rootRoutes);
 app.use("/dashboard", checkAuth, dashboardRoutes);
 app.use("/auth", authRoutes);
-
-app.get("/user", checkAuth, (req, res) => {
-  const status = !!req.user;
-  if(status) {
-    res.statusCode = 200;
-    res.send(req.user);
-  }
-  else {
-    res.statusCode = 401;
-    res.end();
-  }
-});
 
 // listen
 const port = process.env.PORT || 3000;

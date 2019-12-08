@@ -1,18 +1,13 @@
+import passport from "passport";
+
+import { logAuthenticatedUser as log } from "../util/log";
+
 export function redirectSignInController(req, res) {
-  res.redirect("/link-to-discord")
+  return passport.authenticate("discord")(req, res)
 }
 
-export function callbackController(req, res) {
-  passport.authenticate("discord", { failureRedirect: "/auth/callback/failure" }),
-    (req, res) => {
-      res.redirect("/auth/callback/success");
-    }
-}
-
-export function callbackFailureController(req, res) {
-  res.redirect("/sign-in-failed");
-}
-
-export function callbackSuccessController(req, res) {
-  res.redirect("/dashboard");
-}
+export let callbackController =  [
+  passport.authenticate("discord", { failureRedirect: "/sign-in-failed" }),
+  (req, res, next) => log(req.user.id, req.user.username) || next(),
+  (req, res) => res.redirect("/dashboard")
+];
