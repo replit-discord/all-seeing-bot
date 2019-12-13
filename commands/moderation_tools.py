@@ -56,8 +56,8 @@ def findDate(string):
 		'mo'
 	]
 
-	date = strNow[:13].split('-')
-	time = strNow[13:].split(':')
+	date = strNow.split(' ')[0].split('-')
+	time = strNow.split(' ')[1].split(':')
 
 	if string[-1] == '':
 		date[1] = str(int(date[1]) + int(string[:-1]))
@@ -92,13 +92,13 @@ def findDate(string):
 				time[0] = str(int(time[0]) - 24)
 				date[2] = str(int(date[2]) + 1)
 			while int(date[2]) > 6:
-				date[2] = str(int(date[2]) - 7)
+				date[2] = str(int(date[2]) - 6)
 				date[3] = str(int(date[3]) + 1)
 			while int(date[3]) > 51:
-				date[3] = str(int(date[3]) - 52)
+				date[3] = str(int(date[3]) - 51)
 				date[0] = str(int(date[0]) + 1)
 			while int(date[1]) > 11:
-				date[1] = str(int(date[1]) - 12)
+				date[1] = str(int(date[1]) - 11)
 				date[0] = str(int(date[0]) + 1)
 			# print(date, time)
 			for a in range(len(time)):

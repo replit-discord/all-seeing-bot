@@ -1,0 +1,2 @@
+[pycodestyle]
+ignore = W191,E701,E722,W605

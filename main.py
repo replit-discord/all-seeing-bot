@@ -1,6 +1,13 @@
+
 import datetime
 import discord
 import os
+import os
+with open('.env', 'r') as env:
+        for line in env.read().split('\n'):
+                if '=' in line:
+                        line_split = line.split('=')
+                        os.environ[line_split[0]] = line_split[1]
 import asyncio
 import sys
 import traceback
@@ -21,7 +28,6 @@ from spam_stuff import log_offense, get_spam_chart, check_expire, spam_chart
 
 client = discord.Client()
 
-
 async def log(text, guild, title='Automatic'):
 
 	log_embed = discord.Embed(
@@ -31,9 +37,10 @@ async def log(text, guild, title='Automatic'):
 	)
 
 	log_dict = await read('al')
-	action_log_id = log_dict[guild.id]
-	print(action_log_id)
+	
 	try:
+		action_log_id = log_dict[guild.id]
+		print(action_log_id)
 		log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
 		await log_channel.send(embed=log_embed)
 	except KeyError:
@@ -47,6 +54,10 @@ do_setup = True
 @client.event
 async def on_ready():
 	global do_setup
+	usrs = 0
+	for a in client.guilds:
+		usrs += int(len(a.members))
+	print(usrs, 'usrs')
 	if do_setup:
 
 		await write('bot_prefix', '?')
@@ -56,6 +67,7 @@ async def on_ready():
 				name='Everything', type=discord.ActivityType(3)
 			)
 		)
+
 		print("I'm in")
 		print(client.user)
 		print('settings up background tasks')
@@ -107,7 +119,7 @@ async def on_member_join(member):
 						'muted muted before they left the server, and their duration is not up.'
 					)
 	except Exception:
-
+		if member.guild.id != 264445053596991498:
 			traceback_message = traceback.format_exc()
 			out = sys.exc_info()
 			await error_log(traceback_message, out, client)
@@ -153,7 +165,7 @@ async def on_message_edit(before, after):
 					after.guild
 				)
 	except Exception:
-
+		if before.guild.id != 264445053596991498:
 			traceback_message = traceback.format_exc()
 			out = sys.exc_info()
 			await error_log(traceback_message, out, client)
@@ -185,7 +197,8 @@ async def on_message_delete(message):
 			content = message.content
 			content = content.replace('`', '')
 			user = message.author
-			await log(
+			try:
+				await log(
 				f'''
 	<@{str(user.id)}>'s message was deleted.
 
@@ -193,9 +206,11 @@ async def on_message_delete(message):
 	`{content}`
 		''',
 				guild
-			)
+				)
+			except KeyError:
+				pass
 	except Exception:
-
+		if message.guild.id != 264445053596991498:
 			traceback_message = traceback.format_exc()
 			out = sys.exc_info()
 			await error_log(traceback_message, out, client)
@@ -568,7 +583,6 @@ async def on_message(message):
 						await message.delete()
 
 					try:
-						print(repr(content))
 
 						for character in ignoredChars:
 							content = content.replace(character, '')
@@ -582,7 +596,7 @@ async def on_message(message):
 					except UnicodeEncodeError:
 						pass
 	except Exception:
-
+		if message.guild.id != 264445053596991498:
 			traceback_message = traceback.format_exc()
 			out = sys.exc_info()
 			await error_log(traceback_message, out, client)
@@ -604,7 +618,7 @@ async def on_reaction_add(reaction, user):
 				)
 
 	except Exception:
-
+		if reaction.message.guild.id != 264445053596991498:
 			traceback_message = traceback.format_exc()
 			out = sys.exc_info()
 			await error_log(traceback_message, out, client)
@@ -660,6 +674,7 @@ async def checkMute():
 		member_id_list = [member.id for member in guild.members]
 		if a[1] not in member_id_list:
 			del mute_list[a[0]][a[1]]
+			print('done oofed')
 		else:
 			user = guild.get_member(a[1])
 			username = user.display_name

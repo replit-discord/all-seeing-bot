@@ -1,7 +1,8 @@
-discord.py
+
 flask
 asyncio
 motor
 emoji
 cryptography
-pytz
+dnspython==1.16.0
+discord.py

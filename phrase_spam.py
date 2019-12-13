@@ -4,7 +4,7 @@ def _is_repeating(message, repeating_count):
 
         if m == '':
             continue
-
+        
         spammed_count = [0]
         for i in range(len(message) // len(m)):
             if message[i * len(m):(i + 1) * len(m)] == m:
