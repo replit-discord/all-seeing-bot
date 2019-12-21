@@ -1,7 +1,8 @@
-discord.py
+git+https://github.com/Rapptz/discord.py
 flask
 asyncio
 motor
 emoji
 cryptography
-pytz
+json-store-client
+
