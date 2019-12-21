@@ -1,8 +1,7 @@
-
+git+https://github.com/Rapptz/discord.py
 flask
 asyncio
 motor
 emoji
 cryptography
-dnspython==1.16.0
-discord.py
+json-store-client
