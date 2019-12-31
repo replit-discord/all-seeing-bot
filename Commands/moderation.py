@@ -711,6 +711,29 @@ class Moderation(commands.Cog, name='Moderation'):
 					else:
 						await ctx.send('Warning will not be deleted.')
 
+	@commands.command(name='purge')
+	async def purge(self, ctx, ammount: int, user: discord.Member = None):
+		channel = ctx.channel
+
+		def check_user(message):
+			return message.author == user
+		msg = await ctx.send('Purging messages.')
+		if user is not None:
+			await channel.purge(
+				limit=ammount,
+				check=lambda x: x.author == user,
+				bulk=True
+			)
+		else:
+			await channel.purge(
+				limit=ammount + 1,
+				check=lambda x: x != msg,
+				bulk=True
+			)
+		await msg.edit(content='Deleted messages.')
+		await asyncio.sleep(2)
+		await msg.delete()
+
 
 def setup(bot):
 	bot.add_cog(Moderation(bot))
