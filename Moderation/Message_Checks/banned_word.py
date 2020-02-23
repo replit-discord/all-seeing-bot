@@ -36,9 +36,9 @@ suffixes = [
 	'er',
 	'it',
 	'hat',
-	'wipe',
-	'wipe',
+	'wipe'
 	'',
+	''
 ]
 
 base_words = [

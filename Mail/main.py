@@ -40,13 +40,13 @@ class PendingConversationList:
 
 	def __repr__(self):
 		return self.data
-	
+
 	def get_data(self, message_id):
 		if message_id in self.data:
 			return self.data[message_id]
 		else:
 			return None
-	
+
 	def add_data(self, ctx, message):
 		user = ctx.author
 		if user.id in self.users:
@@ -56,7 +56,7 @@ class PendingConversationList:
 		self.data[message.id] = PendingConversation(user.id, guild.id)
 		self.users.append(user.id)
 		return True
-	
+
 	def remove(self, message):
 		if message.id not in self.data:
 			return

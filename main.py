@@ -9,6 +9,7 @@ bot = commands.Bot(
 	case_insensitive=True
 )
 
+
 # regex to find all print statements \n\s*print\([^()]*\)
 class initialized:
 	def __init__(self):
@@ -21,17 +22,19 @@ class initialized:
 		else:
 			return True
 
+
 started = initialized()
 
 extensions = [
 	'Commands.dev_cmds',
 	'Commands.data_tweaking',
-	# 'Starboard.main',
+	'Starboard.main',
 	'Commands.moderation',
 	'Moderation.main',
 	'Commands.fun',
 	'Commands.help',
-	'Mail.main'
+	'Mail.main',
+	'Other.logger'
 ]
 
 if __name__ == '__main__':
@@ -41,6 +44,7 @@ if __name__ == '__main__':
 
 @bot.event
 async def on_ready():
+
 	await bot.change_presence(
 		activity=discord.Activity(
 			name='everything', type=discord.ActivityType(3)

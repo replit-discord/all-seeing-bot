@@ -388,7 +388,7 @@ Example Usage:
 			title='**Star Minumum**', description=desc, color=0x73ff00)
 		await ctx.send(embed=embed)
 
-	@commands.Cog.listener()
+	#@commands.Cog.listener()
 	async def on_command_error(self, ctx, Exception):
 		'''if isinstance(Exception, commands.errors.MissingPermissions):
 			desc = 'You do not have sufficent permissions to use this command.'
