@@ -38,3 +38,4 @@ Detects bypassing methods (for word bans). Works for almost every bypassing meth
 
 Highly customizable: Almost every setting is customizable.
 
+[![Run on Repl.it](https://repl.it/badge/github/repl-it-discord/all-seeing-bot)](https://repl.it/github/repl-it-discord/all-seeing-bot)
