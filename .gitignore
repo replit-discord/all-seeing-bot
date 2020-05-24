@@ -1,15 +1,2 @@
-# node
-node_modules/
-
-# python
-venv/
-__pycache__/
-
-# ide
-.idea/
-.code/
-
-# misc
-dist/
-*.log
 .env
+Mail

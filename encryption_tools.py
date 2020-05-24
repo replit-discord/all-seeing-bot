@@ -7,31 +7,31 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
 def prep(key, string):
-	password = key.encode()
+    password = key.encode()
 
-	salt = os.environ.get('SALT').encode()
+    salt = os.environ.get('SALT').encode()
 
-	kdf = PBKDF2HMAC(
-		algorithm=hashes.SHA256(),
-		length=32,
-		salt=salt,
-		iterations=100000,
-		backend=default_backend()
-	)
-	KEY = base64.urlsafe_b64encode(kdf.derive(password))
-	f = Fernet(KEY)
-	string = bytes(string, 'utf-8')
-	return f, string
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+        backend=default_backend()
+    )
+    KEY = base64.urlsafe_b64encode(kdf.derive(password))
+    f = Fernet(KEY)
+    string = bytes(string, 'utf-8')
+    return f, string
 
 
 def encode(key, string):
 
-	key, string = prep(key, string)
+    key, string = prep(key, string)
 
-	return key.encrypt(string).decode()
+    return key.encrypt(string).decode()
 
 
 def decode(key, string):
-	key, string = prep(key, string)
+    key, string = prep(key, string)
 
-	return key.decrypt(string).decode()
+    return key.decrypt(string).decode()
