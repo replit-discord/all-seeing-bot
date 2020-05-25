@@ -60,7 +60,7 @@ async def on_ready():
     )
     print(len(bot.commands))
     if not started():
-        await asyncio.create_task(bg_tasks(bot))
+        await bot.loop.create_task(bg_tasks(bot))
 
     print('ready')
 
