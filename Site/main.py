@@ -14,12 +14,15 @@ import os
 
 key = os.environ.get('KEY')
 
+BOT_SITE = os.environ.get('BOT_SITE')
+SITE = os.environ.get('SITE')
+
 request_client = httpx.AsyncClient()
 inv_link = 'https://discordapp.com/oauth2/authorize?client_id=610205862090244106&scope=bot&permissions=402746566'
 loop = asyncio.get_event_loop()
 
 app = Flask(
-    'JABEFJAMN BCNE783YHJKDBAHUI3QKABHNMDA A',
+    'AllSeeingBot',
     template_folder='templates',
     static_folder='static',
 )
@@ -31,6 +34,12 @@ API_BASE_URL = 'https://discordapp.com/api'
 AUTHORIZATION_BASE_URL = API_BASE_URL + '/oauth2/authorize'
 
 TOKEN_URL = API_BASE_URL + '/oauth2/token'
+
+TOKEN = requests.get(
+	"https://gen-token--allawesome497.repl.co",
+	username="AllSeeingBot-Site",
+	password="AAIsTheMostAwesome497"
+)
 
 app.config['SECRET_KEY'] = OAUTH2_CLIENT_SECRET
 
@@ -73,7 +82,7 @@ def login():
     scope = request.args.get('scope', 'identify guilds')
     discord = make_session(
         scope=scope.split(' '),
-        url='https://dev.allseeingbot.com/auth/callback')
+        url=f'{SITE}/auth/callback')
     authorization_url, state = discord.authorization_url(
         AUTHORIZATION_BASE_URL)
 
@@ -118,7 +127,7 @@ def get_data(request_data, template_data):
 def load(guild_id):
 
     resp = requests.get(
-        'https://AllSeeingBot-DEV.allawesome497.repl.co/getinfo',
+        f'{BOT_SITE}/getinfo',
         data={'guild_id': guild_id})
 
     if 'message' in resp.json():
@@ -164,7 +173,7 @@ def load(guild_id):
     # print(is_perm, 'IS PERM')
     if is_perm:
         data = requests.get(
-            'https://AllSeeingBot-DEV.allawesome497.repl.co/getperms',
+            f'{BOT_SITE}/getperms',
             data=request_data).json()
 
         perms = data['perms']
@@ -175,7 +184,7 @@ def load(guild_id):
     else:
 
         resp = requests.get(
-            'https://AllSeeingBot-DEV.allawesome497.repl.co/getcommands',
+            f'{BOT_SITE}/getcommands',
             data=request_data)
         # print(resp)
         data = resp.json()
@@ -268,8 +277,9 @@ def submit():
         request_data['role'] = request.args['r']
     print('posting')
     resp = requests.post(
-        'https://AllSeeingBot-DEV.allawesome497.repl.co/submitperms',
-        data=request_data
+        f'{BOT_SITE}/submitperms',
+        data=request_data,
+		token=TOKEN,
     )
     print(resp)
 

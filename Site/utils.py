@@ -1,5 +1,5 @@
 from flask import redirect, jsonify, request
-from perms import Permissions
+from discord import Permissions
 from encryption_tools import encode
 import requests
 import os
@@ -29,7 +29,7 @@ def handle_commands():
         request_data['channel'] = request.args['c']
     print(request_data)
     res = requests.post(
-        'https://AllSeeingBot-DEV.allawesome497.repl.co/submitcommands',
+        f'{BOT_SITE}/submitcommands',
         data=request_data)
     print("GOT A RESPONSE", res)
     tab = 'commands'
