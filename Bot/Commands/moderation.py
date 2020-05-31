@@ -288,7 +288,7 @@ class Moderation(commands.Cog, name='moderation'):
             value=ban_emoji_content,
             inline=True
         )
-        print(ban_emoji_content)
+        # print(ban_emoji_content)
         await ctx.send(embed=embed)
 
     @commands.command(name='kick', aliases=['k'])
@@ -423,14 +423,15 @@ class Moderation(commands.Cog, name='moderation'):
                 duration = find_date(time)
                 end_date = duration + datetime.now()
 
-                end_date.strftime('%Y-%m-%w-%W %H:%M:%S')
+                end_date = end_date.strftime('%Y-%m-%w-%W %H:%M:%S')
                 mute_list = await read('muteList')
-                if guild.id in mute_list:
-                    guild_list = mute_list[guild.id]
+                if str(guild.id) in mute_list:
+                    guild_list = mute_list[str(guild.id)]
                 else:
                     guild_list = {}
+                # print(guild_list)
                 guild_list[user.id] = end_date
-                mute_list[guild.id] = guild_list
+                mute_list[str(guild.id)] = guild_list
                 await write('muteList', mute_list)
                 fields.append(
                     ('**Duration:**', f'`{time}`', True)
@@ -666,7 +667,7 @@ class Moderation(commands.Cog, name='moderation'):
             value += f'Type: **{w["type"]}**\n'
             value += f'Reason: ***{w["reason"]}***\n'
             value += f'Timestamp: **{w["date"]}**'
-            print(value)
+            # print(value)
             fields.append((f'ICIN **{icin}**:', value))
             icin += 1
 
@@ -718,7 +719,7 @@ class Moderation(commands.Cog, name='moderation'):
         Example Usage:
         ``````css
         ?history <user> // Get a list of <user>'s warns'''
-        print("bruhe")
+        # print("bruhe")
         warns = await read('warn_list')
 
         guild = ctx.guild
@@ -756,7 +757,7 @@ class Moderation(commands.Cog, name='moderation'):
             value += f'Reason: ***{w["reason"]}***\n'
             value += f'Moderator: **<@{w["moderator"]}>**\n'
             value += f'Timestamp: **{w["date"]}**'
-            print(value)
+            # print(value)
             fields.append((f'ICIN **{icin}**:', value))
             icin += 1
 
@@ -888,7 +889,7 @@ class Moderation(commands.Cog, name='moderation'):
                 '**Message Purge**',
                 showauth=True
             )
-            print(msg in msgs, len(msgs))
+            # print(msg in msgs, len(msgs))
         else:
 
             msgs = await channel.purge(
@@ -902,7 +903,7 @@ class Moderation(commands.Cog, name='moderation'):
                 '**Message Purge**',
                 showauth=True
             )
-            print(msg in msgs)
+            # print(msg in msgs)
 
         await msg.edit(content='Deleted messages.')
         await asyncio.sleep(2)

@@ -104,7 +104,7 @@ class Customization(commands.Cog, name='customization'):
         if time is None:
             if guild.id in mute_duration:
                 seconds = mute_duration[guild.id]
-                await ctx.send(f'The current default mute duration is `{seconds}`')
+                await ctx.send(f'The current default mute duration is `{seconds}`s')
             else:
                 await ctx.send('No default mute duration set!')
 
@@ -126,6 +126,7 @@ class Customization(commands.Cog, name='customization'):
                     ctx,
                     f'<@{author.id}> set the default mute duration to {time}'
                 )
+                await ctx.send("Set the default mute duration.")
 
             except InvalidDate:
                 await ctx.send(f'Invalid ammount of time, `{time}`.')

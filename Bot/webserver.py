@@ -1,12 +1,13 @@
 from flask import Flask, jsonify, request
+import utils
 from utils import get_checks, set_checks, check_raw_command, set_commands
 from threading import Thread
-import random
 import json
 import asyncio
 import os
+import importlib
 from encryption_tools import decode
-
+from tools.read_write import read
 import logging
 
 log = logging.getLogger('werkzeug')
@@ -37,7 +38,7 @@ def run():
 
     app.run(
         host='0.0.0.0',
-        port=random.randint(2000, 9000)
+        port=4970
     )
 
 
@@ -75,7 +76,7 @@ def get_commands():
 
 
 @app.route('/getinfo')
-def getchannels():
+def getinfo():
     guild_id = int(request.form['guild_id'])
 
     try:
@@ -83,13 +84,11 @@ def getchannels():
         roles = []
         guild = bot.get_guild(guild_id)
 
-        for c in guild.channels:
-
-            if str(c.type) == 'text':
-                channels.append((c.name, c.id))
-
-            elif str(c.type) == 'category':
-                channels.append((c.name, 'cat'))
+        for cat in guild.by_category():
+            if cat[0] == None:
+                channels.append(('No Category', [(c.name, c.id) for c in cat[1]]))
+            else:
+                channels.append((cat[0].name, [(c.name, c.id) for c in cat[1]]))
 
         for r in guild.roles:
 
@@ -106,6 +105,17 @@ def getchannels():
 class FakeRole:
     def __init__(self, id):
         self.id = int(id)
+
+
+@app.route('/reload')
+def reload():
+    global utils, get_checks, set_checks, check_raw_command, set_commands
+    importlib.reload(utils)
+    from utils import get_checks, set_checks, check_raw_command, set_commands
+    bot.loop.create_task(read('perms', read_from_cache=False))
+
+    return 'done'
+
 
 
 @app.route('/getperms')
@@ -208,7 +218,6 @@ def submitcommands():
         bot.loop
     ).result()
     return 'done'
-
 
 
 def keep_alive(d_bot):

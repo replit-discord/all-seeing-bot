@@ -48,11 +48,8 @@ class Fun(commands.Cog, name='fun'):
         # low_score += ammount - 1
         # print(low_score, ammount)
         high_score = ceil(.9 * max_score) / max_score
-        print(sides * ammount, max_score)
         percent = total / max_score
-        print(percent, total)
         user = ctx.author
-        print(percent, low_score, high_score)
         if percent >= high_score:
             desc = f'🎉 <@{user.id}>, you rolled {total}! 🎉'
         elif percent <= low_score:

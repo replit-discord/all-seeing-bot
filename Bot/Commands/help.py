@@ -39,6 +39,7 @@ class HelpCommand(commands.HelpCommand):
         return super().get_bot_mapping()
 
     async def send_bot_help(self, mapping):
+        unfiltered_cogs = [cog for cog in mapping][:-1]
         cogs = []
 
         for cog in unfiltered_cogs:

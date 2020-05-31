@@ -7,6 +7,7 @@ from defualts import command_defaults
 from Moderation.Message_Checks import checks
 from datetime import timedelta, datetime
 from tools.read_write import read, write
+from pygments import highlight, lexers, formatters
 
 
 dev_ids = [
@@ -54,9 +55,9 @@ class LazyAuthor:
 
 
 class LazyCtx:
-    def __init__(self, command, guild_id, **info):
+    def __init__(self, command, **info):
         self.command = command
-        self.guild = LazyGuild(guild_id)
+        self.guild = LazyGuild(info['guild_id'])
         self.author = LazyAuthor()
 
         if 'role' in info:
@@ -65,8 +66,8 @@ class LazyCtx:
 
         else:
             self.author.roles = []
-        if 'channel_id' in info:
-            self.channel = LazyChannel(info['channel_id'])
+        if 'channel' in info:
+            self.channel = LazyChannel(info['channel'])
         else:
             self.channel = None
 
@@ -78,7 +79,7 @@ def is_dev(ctx):
 
 def execute(_code, loc):
     '''
-    Executes code asynchronously,0 credits to mat, https://matdoes.d0ev
+    Executes code asynchronously, credits to mat, https://matdoes.dev
     '''
     _code = _code.replace('\n', '\n ')
     globs = globals()
@@ -88,10 +89,6 @@ def execute(_code, loc):
         globs
     )
     return globs['__ex']()
-
-
-async def check_allowed(ctx):
-    pass
 
 
 def index_args(args):
@@ -159,7 +156,7 @@ def find_date(string):  # Credits to @mat1 for this
     return total_time
 
 
-async def get_muted_role(guild):
+async def get_muted_role(guild) -> discord.Role:
     muted_role = discord.utils.get(guild.roles, name='Muted')
     if muted_role is None:
         full_mute_role_list = await read('mri')
@@ -176,6 +173,25 @@ async def get_muted_role(guild):
         )
 
     return muted_role
+
+
+async def mute(user: discord.Member, duration: timedelta):
+    end_date = datetime.now() + duration
+
+    try:
+        muted = await get_muted_role(user.guild)
+        await user.add_roles(muted, reason="automod")
+
+        data = {
+            str(user.guild.id): {str(user.id): end_date.strftime("%Y-%m-%w-%W %H:%M:%S")}
+        }
+        muted = await read('muteList')
+
+        muted = update(muted, data)
+        await write('muteList', muted)
+
+    except discord.Forbidden:
+        pass
 
 
 async def error_log(tb, error, bot):
@@ -263,15 +279,15 @@ async def get_checks(
             'roles': {},
             'channels': {},
         }
-
     all_roles = guild_checks['roles']
     check_data = {c.name: c.default for c in checks}
     if 'general' in guild_checks:
-        check_data.update(guild_checks['general'])
+        check_data = update(check_data, guild_checks['general'])
 
     role_and_channel = False
+
     if roles:
-        for role in roles[1::-1]:
+        for role in roles[1:][::-1]:
 
             if str(role.id) in all_roles:
                 role_checks = all_roles[str(role.id)]
@@ -279,16 +295,17 @@ async def get_checks(
                 continue
 
             if channel_id and str(channel_id) in role_checks:
-                check_data.update(role_checks[str(channel_id)])
+                check_data = update(check_data, role_checks[str(channel_id)])
                 role_and_channel = True
                 break
             elif 'general' in role_checks:
-                check_data.update(role_checks['general'])
+                check_data = update(check_data, role_checks['general'])
                 break
 
     if not role_and_channel:
         if channel_id and str(channel_id) in guild_checks['channels']:
-            check_data.update(guild_checks['channels'][str(channel_id)])
+            check_data = update(
+                check_data, guild_checks['channels'][str(channel_id)])
     if as_dict:
         return check_data
     return_data = []
@@ -311,7 +328,7 @@ async def set_checks(data, guild_id, channel_id=None, role_id=None):
     if str(guild_id) in perms:
         guild_perms = perms[str(guild_id)]
     else:
-        guild_perms = {'checks': {}, 'commands': {}}
+        guild_perms = {}
 
     if 'checks' not in guild_perms:
         guild_checks = {
@@ -352,6 +369,7 @@ async def set_checks(data, guild_id, channel_id=None, role_id=None):
         perms[str(guild_id)]['checks'] = guild_checks
     else:
         perms[str(guild_id)] = {'checks': guild_checks}
+
     await write('perms', perms)
 
 
@@ -456,8 +474,7 @@ async def set_commands(
         c_perms[c] = True
 
     for c in c_perms:
-
-        perms.update(await set_command(
+        perms = update(perms, await set_command(
             c,
             c_perms[c],
             guild_id,
@@ -479,8 +496,8 @@ def check_type(user):
 
 async def check_command(ctx):
 
-    if ctx.command in dev_commands:
-        return True  # Dev's (so me) can always use dev commands
+    if ctx.command.name in dev_commands:
+        return True  # Devs (so me) can always use dev commands
     if not check_type(ctx.author):
         if ctx.command.name in command_defaults:
             return command_defaults[ctx.command.name] == 0
@@ -500,10 +517,8 @@ async def check_command(ctx):
     for cmd in command_defaults:
 
         cmd_perms = discord.Permissions(command_defaults[cmd])
-        # print(cmd_perms.value)
         if cmd_perms.value == 0:
             perms[cmd] = True
-            # print(command)
             continue
 
         if ctx.author.guild_permissions.value == 0:
@@ -516,7 +531,6 @@ async def check_command(ctx):
             cmd_perms
         )
 
-    # print(perms)
     perm_data = await read('perms')
 
     if str(ctx.guild.id) in perm_data:
@@ -536,7 +550,7 @@ async def check_command(ctx):
     channel = ctx.channel
     roles = ctx.author.roles
 
-    perms.update(command_perms['general'])
+    perms = update(perms, command_perms['general'])
     if 'channels' in command_perms:
         channel_perms = command_perms['channels']
     else:
@@ -548,6 +562,7 @@ async def check_command(ctx):
         role_perms = {}
 
     if channel != None and str(channel.id) in channel_perms:
+
         perms.update(channel_perms[str(channel.id)])
 
     for role in roles:
@@ -563,16 +578,13 @@ async def check_command(ctx):
         perms[command] = False
     if ctx.author.id != -1:
         perm_cache.set_data(ctx.author.id, ctx.guild.id, channel, perms)
-    # print(json.dumps(perms, indent=4))
-    return perms[command]
 
+    return perms[command]
 
 
 def check_raw_command(command, data, loop, **info):
 
-    data = data
-
-    ctx = LazyCtx(command, data['guild_id'], **info)
+    ctx = LazyCtx(command, **data)
 
     return asyncio.run_coroutine_threadsafe(
         check_command(ctx),

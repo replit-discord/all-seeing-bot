@@ -20,9 +20,6 @@ class DevCommands(commands.Cog, name='dev'):
     def cog_check(self, ctx):
         return is_dev(ctx)
 
-    def check(self, ctx):
-        return is_dev(ctx)
-
     def generate_embed(self, title, description, color=0x00ff22):
         embed = discord.Embed(
             title=title,
@@ -132,7 +129,7 @@ class DevCommands(commands.Cog, name='dev'):
         extensions = []
 
         for b in extensions_dict:
-            print(b)
+            # print(b)
             extensions.append(b)
 
         for a in range(len(extensions)):

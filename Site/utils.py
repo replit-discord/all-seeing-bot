@@ -7,6 +7,8 @@ import json
 
 key = os.environ.get('KEY')
 
+BOT_SITE = os.environ.get('BOT_SITE')
+SITE = os.environ.get('SITE')
 
 def perm_check(guild):
     return Permissions(guild['permissions']).administrator

@@ -1,8 +1,9 @@
 from tools.read_write import read, write
-
+import discord
 import datetime
-from discord import NotFound
-from utils import get_muted_role, find_date
+import json
+from discord import NotFound, Member
+from utils import mute, find_date, get_muted_role
 
 
 class data:
@@ -25,79 +26,68 @@ class data:
 
 
 spam_chart = data.spam_chart()
-spam_chart.cache('spamChart', {})
-spam_chart.cache('after_spam', {})
+spam_chart.cache('spam_chart', {})
+
+
+async def get_mute_duration(guild: discord.Guild) -> datetime.timedelta:
+    data = await read('md')
+
+    if guild.id in data:
+        seconds = data[guild.id]
+        print('ok')
+        return datetime.timedelta(seconds=seconds)
+    else:
+        return datetime.timedelta(minutes=5)
 
 
 def get_spam_chart():
-    return spam_chart.read_cache('spamChart')
+    return spam_chart.read_cache('spam_chart')
 
 
-def log_offense(author, guild, duration, message):
-    full_offense_dict = spam_chart.read_cache("spamChart")
-    guild_id = guild.id
-    user = author.id
-    timedelta = find_date(f"{str(duration)}s")
+def log_offense(message, duration):
+    author = message.author
+    if type(author) != Member:
+        return
+    full_offense_dict = spam_chart.read_cache("spam_chart")
+    guild = message.guild
+    timedelta = datetime.timedelta(seconds=int(duration))
     date = datetime.datetime.now() + timedelta
-    date = date.strftime("%Y-%m-%w-%W %H:%M:%S")
-    if guild_id in full_offense_dict:
-        guild_dict = full_offense_dict[guild.id]
-    else:
-        guild_dict = {}
-    if user in guild_dict:
-        user_dict = guild_dict[user]
-    else:
-        user_dict = []
-    item = [author, message, guild, date]
-    user_dict.append(item)
-    guild_dict[user] = user_dict
-    full_offense_dict[guild_id] = guild_dict
-    spam_chart.cache("spamChart", full_offense_dict)
 
-    return(len(user_dict))
+    if guild.id in full_offense_dict:
+        guild_offenses = full_offense_dict[guild.id]
+    else:
+        guild_offenses = []
+
+    item = (message, date)
+
+    guild_offenses.append(item)
+
+    full_offense_dict[guild.id] = guild_offenses
+    spam_chart.cache("spam_chart", full_offense_dict)
 
 
 async def check_expire():
-    spamChart = get_spam_chart()
-    del_list = []
-    for a in spamChart:
-        guild_chart = spamChart[a]
-        for b in guild_chart:
-            user_chart = guild_chart[b]
+    sc = get_spam_chart()
+    new_data = {}
+    now = datetime.datetime.now()
+    for g in sc:
+        data = sc[g]
+        del_list = []
+        for n in data:
+            if n[1] < now:
+                del_list.append(n)
 
-            for c in range(len(user_chart)):
+        for d in del_list:
+            data.remove(d)
+            author = d[0].author
+            muted = await get_muted_role(d[0].guild)
+            if muted in author.roles:
                 try:
-                    ok = user_chart[c]
-                    date = datetime.datetime.strptime(
-                        ok[3], "%Y-%m-%w-%W %H:%M:%S")
-                    if datetime.datetime.now() >= date:
-                        if len(user_chart) > 1:
-                            await handle_infractions(ok[2], ['w'])
-
-                        del_list.append(f'{a}/{b}/{c}')
-                except Exception:
-                    del_list.append(f'{a}/{b}/{c}')
-
-    for a in del_list:
-        a = a.split('/')
-
-        stuff = spamChart[int(a[0])][int(a[1])][0]
-        guild = stuff[2]
-        user = stuff[0]
-        msg = stuff[1]
-
-        try:
-
-            if (await get_muted_role(guild)) in user.roles:
-
-                await msg.delete()
-
-        except NotFound:
-            pass
-
-        spamChart[int(a[0])][int(a[1])].remove(stuff)
-
-    spam_chart.cache('spamChart', spamChart)
+                    await d[0].delete()
+                except discord.NotFound:
+                    pass
+        new_data[g] = data
+    spam_chart.cache('spam_chart', sc)
 
 
 def check_user(user, limit):
@@ -105,19 +95,17 @@ def check_user(user, limit):
     spam_chart = get_spam_chart()
     guild = user.guild
     if guild.id in spam_chart:
-        guild_spam_chart = spam_chart[guild.id]
-        if user.id in guild_spam_chart:
-            if len(guild_spam_chart[user.id]) >= limit:
-                return True
-            else:
-                return False
-        else:
-            return False
+        count = 0
+        for a in spam_chart[guild.id]:
+            if a[0].author.id == user.id:
+                count += 1
+
+        return count > limit
     else:
         return False
 
 
-async def handle_message(message):
+async def handle_message(message: discord.Message):
     author = message.author
     guild = message.guild
     full_duration_dict = await read('od')
@@ -144,12 +132,23 @@ async def handle_message(message):
 
     else:
         limit = 5
-    log_offense(author, guild, duration, message)
+    log_offense(message, duration)
 
-    return check_user(author, limit)
+    if check_user(author, limit):
+        if check_user(author, limit):
+            duration = await get_mute_duration(author.guild)
+            await spam_chart.cog.log(
+                message,
+                f'<@{author.id}> was automatically muted for {duration.seconds} seconds.',
+                '**Automod**',
+                color=0xff0000,
+                showauth=True
+            )
+            await mute(author, duration)
 
 
 async def handle_infractions(message, failed_checks):
+
     author = message.author
     guild = message.guild
     full_duration_dict = await read('od')
@@ -172,12 +171,22 @@ async def handle_infractions(message, failed_checks):
         limit = 5
         full_limit_dict[guild.id] = 5
         await write('ol', full_limit_dict)
-    log_offense(author, guild, duration, message)
+    log_offense(message, duration)
 
-    return check_user(author, limit)
+    if check_user(author, limit):
+        duration = await get_mute_duration(author.guild)
+        await spam_chart.cog.log(
+            message,
+            f'<@{author.id}> was automatically muted for {duration.seconds} seconds.',
+            '**Automod**',
+            color=0xff0000,
+            showauth=True
+        )
+        await mute(author, duration)
 
 
 async def handle_banned_emoji(reaction, user):
+
     message = reaction.message
     author = user
     guild = message.guild
@@ -205,6 +214,19 @@ async def handle_banned_emoji(reaction, user):
 
     else:
         limit = 5
-    log_offense(author, guild, duration, message)
+    log_offense(message, duration)
 
-    return check_user(author, limit)
+    if check_user(author, limit):
+        duration = await get_mute_duration(author.guild)
+        await spam_chart.cog.log(
+            message,
+            f'<@{author.id}> was automatically muted for {duration.seconds} seconds.',
+            '**Automod**',
+            color=0xff0000,
+            showauth=True
+        )
+        await mute(author, duration)
+
+
+def init(cog):
+    spam_chart.cog = cog

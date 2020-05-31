@@ -4,14 +4,14 @@ from datetime import datetime
 from tools.read_write import read, write
 from utils import index_args, get_checks
 from discord.ext import commands
-from Moderation.spamchart import handle_infractions, handle_message, handle_banned_emoji
+from Moderation.spamchart import handle_infractions, handle_message, handle_banned_emoji, init
 from Moderation.Message_Checks import checks
 
 
 async def log(
-        message,
-        desc,
-        title='**Moderation**',
+        message: discord.Message,
+        desc: str,
+        title: str = '**Moderation**',
         color=0xff0000,
         **kwargs
 ):
@@ -51,9 +51,10 @@ async def log(
     now = datetime.now()
     log_embed.timestamp = now
     log_dict = await read('al')
-    action_log_id = log_dict[guild.id]
-    log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
-    await log_channel.send(embed=log_embed)
+    if guild.id in log_dict:
+        action_log_id = log_dict[guild.id]
+        log_channel = message.guild.get_channel(action_log_id)
+        await log_channel.send(embed=log_embed)
 
 
 class Checks(commands.Cog, name='moderation checks'):
@@ -63,6 +64,18 @@ class Checks(commands.Cog, name='moderation checks'):
         self.bot = bot
         self.user = bot.user
         self.color = 0xd64c1e
+        init(self)
+
+    async def log(
+        self,
+        message: discord.Message,
+        desc: str,
+        title: str = '**Moderation**',
+        color=0xff0000,
+        **kwargs
+    ):  
+        print("yo")
+        await log(message, desc, title, color, **kwargs)
 
     async def check_enabled(self, guild, name, channel=None, author=None):
 
@@ -126,7 +139,6 @@ class Checks(commands.Cog, name='moderation checks'):
             )
 
             await message.delete()
-            await author.send('Your message was deleted, because it was spam or contained a word banned on the guild.')
 
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload):
@@ -178,7 +190,6 @@ class Checks(commands.Cog, name='moderation checks'):
                     fields=fields
                 )
                 await message.delete()
-                await author.send('Your message was deleted, because it was spam or contained a word banned on the guild.')
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):

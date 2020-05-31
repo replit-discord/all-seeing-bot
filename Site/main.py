@@ -37,8 +37,11 @@ TOKEN_URL = API_BASE_URL + '/oauth2/token'
 
 TOKEN = requests.get(
 	"https://gen-token--allawesome497.repl.co",
-	username="AllSeeingBot-Site",
-	password="AAIsTheMostAwesome497"
+	headers={
+		'username': "AllSeeingBot-Site",
+		'password': "AAIsTheMostAwesome497"
+	}
+	
 )
 
 app.config['SECRET_KEY'] = OAUTH2_CLIENT_SECRET
@@ -57,15 +60,9 @@ def home():
     user = discord.get(API_BASE_URL + '/users/@me').json()
     guilds = discord.get(API_BASE_URL + '/users/@me/guilds').json()
     logged_in = not 'message' in user
-    # if 'message' in user:
-    # 	return redirect('/login')
-    # return jsonify(
-    # 	user=user,
-    # 	guilds=guilds
-    # )
 
     return render_template(
-        'home.html',
+        'home.jinja2',
         logged_in=logged_in,
         guilds=guilds,
         user=user,
@@ -164,11 +161,11 @@ def load(guild_id):
         template_data['channel'] = None
 
     template_data['channel_name'] = None
-
-    for c in info['channels']:
-        if str(c[1]) == template_data['channel']:
-            template_data['channel_name'] = c[0]
-            break
+    for cat in info['channels']:
+        for c in cat[1]:
+            if str(c[1]) == template_data['channel']:
+                template_data['channel_name'] = c[0]
+                break
 
     # print(is_perm, 'IS PERM')
     if is_perm:
@@ -180,7 +177,7 @@ def load(guild_id):
 
         # print(perms)
         template_data['form'] = generate_perm_field(perms)
-        return render_template('perms.html', **template_data)
+        return render_template('perms.jinja2', **template_data)
     else:
 
         resp = requests.get(
@@ -190,7 +187,7 @@ def load(guild_id):
         data = resp.json()
         commands = data['cogs']
         template_data['form'] = generate_command_field(commands)
-        return render_template('commands.html', **template_data)
+        return render_template('commands.jinja2', **template_data)
 
 
 @app.route('/manage')
@@ -216,7 +213,7 @@ def manage(guild_id):
         if g['id'] == guild_id:
             guild_name = g['name']
             if not perm_check(g):
-                return render_template('noperm.html', user=user)
+                return render_template('noperm.jinja2', user=user)
     if not guild_name:
         return f'AllSeeingBot is not on this server. Click <a href="{inv_link}">here</a> to invite ASB.'
     session['GUILD_ID'] = guild_id
@@ -231,7 +228,7 @@ def manage(guild_id):
         role = None
     print(request.args)
     return render_template(
-        'manage.html',
+        'manage.jinja2',
         user=user,
         guild_id=guild_id,
         channel=channel,
@@ -279,7 +276,9 @@ def submit():
     resp = requests.post(
         f'{BOT_SITE}/submitperms',
         data=request_data,
-		token=TOKEN,
+		headers={
+			'token': str(TOKEN),
+		}
     )
     print(resp)
 
@@ -302,7 +301,7 @@ def submit():
 
 
 def start_app():
-    app.run(host='0.0.0.0', port=random.randint(2000, 9000))
+    app.run(host='0.0.0.0', port=3030)
 
 
 if __name__ == '__main__':

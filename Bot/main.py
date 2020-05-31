@@ -1,19 +1,21 @@
 import os
+import sys
 import discord
 import asyncio
-from webserver import keep_alive
+import webserver
 from discord.ext import commands
 from background_tasks import bg_tasks
-from utils import check_command
+from utils import check_command, is_dev
+import importlib
 
 
 async def determine_prefix(bot, message):
-    if message.guild.id == 437048931827056642:
-        return "."
+    if message.guild and message.guild.id == 437048931827056642:
+        return "$"
     return "?"
 
 bot = commands.Bot(
-    command_prefix='?',
+    command_prefix=determine_prefix,
     case_insensitive=True
 )
 
@@ -58,20 +60,23 @@ async def on_ready():
             name='everything', type=discord.ActivityType(3)
         )
     )
-    print(len(bot.commands))
+    # print(len(bot.commands))
     if not started():
-        await bot.loop.create_task(bg_tasks(bot))
+        bot.loop.create_task(bg_tasks(bot))
 
-    print('ready')
+    # print('ready')
 
 
 @bot.event
 async def on_command_error(ctx, error):
     if type(error) == commands.errors.CheckFailure:
-        await ctx.author.send(f"You cant use `{ctx.prefix}{ctx.command}` here...")
+        await ctx.message.delete()
+        msg = await ctx.send(f"You cant use `{ctx.prefix}{ctx.command}` here...")
+        await asyncio.sleep(3)
+        await msg.delete()
     else:
         raise error
 
-keep_alive(bot)
+webserver.keep_alive(bot)
 token = os.environ.get("DISCORD_BOT_SECRET")
 bot.run(token)

@@ -30,7 +30,7 @@ async def log(
         description=desc,
         color=color
     )
-    print('fine1')
+    # print('fine1')
     for key, value in kwargs.items():
         if key == 'fields':
             for field in value:
@@ -68,17 +68,17 @@ async def log(
         if key == 'no_msg':
             guild = value
             idk = True
-    print('fine2')
+    # print('fine2')
     if not idk:
         guild = message.guild
     log_embed.timestamp = timestamp
     log_dict = await read('al')
-    print('fine3')
+    # print('fine3')
     action_log_id = log_dict[guild.id]
     log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
-    print('fine4')
+    # print('fine4')
     await log_channel.send(embed=log_embed)
-    print('fine5')
+    # print('fine5')
 
 
 class Logger(commands.Cog, name='Logs'):
@@ -136,7 +136,7 @@ class Logger(commands.Cog, name='Logs'):
         if not self.other_checks(message):
             return
         author = message.author
-        desc = f'<@{author.id}> deleted their message.'
+        desc = f"<@{author.id}>\'s message was deleted."
         fields = [('**Message Content**', message.content)]
         timestamp = datetime.now()
         await log(
@@ -152,9 +152,9 @@ class Logger(commands.Cog, name='Logs'):
     @commands.Cog.listener()
     async def on_bulk_message_delete(self, messages):
         guild = messages[0].guild
-        print(len(messages))
+        # print(len(messages))
         if not (await self.check_log('bulkdelete', guild)):
-            print('False?')
+            # print('False?')
             return
 
         desc = 'Multiple messages were deleted.'
@@ -229,7 +229,7 @@ class Logger(commands.Cog, name='Logs'):
         timestamp = datetime.now()
         desc = f'<@{member.id}> has left the server.'
         roles = member.roles
-        print(roles)
+        # print(roles)
         str_roles = ', '.join(
             [f'<@&{role.id}>' for role in roles if role.name != '@everyone']
         )
@@ -271,7 +271,7 @@ class Logger(commands.Cog, name='Logs'):
                 reason = audit_log.reason
                 if reason is None:
                     reason = "No reason provided."
-                print(user, timestamp, reason)
+                # print(user, timestamp, reason)
                 break
         if user is None:
             desc = f'<@{member.id}> was banned from the server.'

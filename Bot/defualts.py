@@ -42,4 +42,5 @@ command_defaults = {
     "help": 0,
     "rtogglelist": 32,
     "emojimax": 32,
+    "strike": 8192,
 }

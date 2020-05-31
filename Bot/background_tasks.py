@@ -20,7 +20,7 @@ async def log(text, guild, title='Automatic'):
 
     try:
         action_log_id = log_dict[guild.id]
-        print(action_log_id)
+        # print(action_log_id)
         log_channel = discord.utils.get(guild.text_channels, id=action_log_id)
         await log_channel.send(embed=log_embed)
     except KeyError:
@@ -30,7 +30,7 @@ async def log(text, guild, title='Automatic'):
 
 
 async def check_ban():
-    global client
+    global bot
     banList = await read('banList')
     delList = []
     for guild_list in banList:
@@ -41,16 +41,16 @@ async def check_ban():
                 delList.append([guild_list, userId])
 
     for a in delList:
-        guild = client.get_guild(a[0])
+        guild = bot.get_guild(a[0])
         banEntry = await guild.bans()
         for each in banEntry:
             if each.user.id == a[1]:
                 user = each.user
                 break
         if not user:
-            print(f'user {a[1]} not found')
+            # print(f'user {a[1]} not found')
             return
-        print('unbanning')
+        # print('unbanning')
         username = user.display_name
         await log(
             f'`{username}` has been unbanned because their time is up',
@@ -63,43 +63,45 @@ async def check_ban():
 
 
 async def check_mute():
-    global client
+    global bot
     mute_list = await read('muteList')
     del_list = []
     for guild_list in mute_list:
-        for userId in mute_list[guild_list]:
-
-            date = mute_list[guild_list][userId]["timeup"]
+        for user_id in mute_list[guild_list]:
+            date = mute_list[guild_list][user_id]
             date = datetime.datetime.strptime(date, "%Y-%m-%w-%W %H:%M:%S")
             if datetime.datetime.now() >= date:
-                del_list.append([guild_list, userId])
+                del_list.append([guild_list, user_id])
 
     for a in del_list:
-        guild = client.get_guild(a[0])
+        guild = bot.get_guild(int(a[0]))
         member_id_list = [member.id for member in guild.members]
-        if a[1] not in member_id_list:
+        if int(a[1]) not in member_id_list:
             del mute_list[a[0]][a[1]]
-        else:
-            user = guild.get_member(a[1])
-            username = user.display_name
-            await log(
-                f'`{username}` has been unmuted because their time is up',
-                guild
-            )
-            del mute_list[a[0]][a[1]]
-            await user.remove_roles(await get_muted_role(guild))
+            continue
+
+        user = guild.get_member(int(a[1]))
+        username = user.display_name
+        await log(
+            f'`{username}` has been unmuted because their mute duration has ended.',
+            guild
+        )
+        del mute_list[a[0]][a[1]]
+        await user.remove_roles(await get_muted_role(guild))
 
     await write('muteList', mute_list)
 
 
-async def bg_tasks(bot):
+async def bg_tasks(client):
+    global bot
+    bot = client
     tasks = [
         check_expire,
         check_ban,
         check_mute
     ]
     while True:
-
+        print('Running tasks')
         for task in tasks:
             try:
                 await task()
@@ -108,5 +110,5 @@ async def bg_tasks(bot):
                 traceback_message = traceback.format_exc()
                 out = sys.exc_info()
                 await error_log(traceback_message, out, bot)
-                raise e
+                print(e)
         await asyncio.sleep(1)
