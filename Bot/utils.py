@@ -15,11 +15,12 @@ dev_ids = [
     527937324865290260
 ]
 
-dev_commands = [
+special_commands = [
     'write', 'read',
     'exec', 'reload',
     'load', 'unload',
-    'listextensions', 'le'
+    'listextensions', 'le',
+    'helper',
 ]
 
 
@@ -496,7 +497,7 @@ def check_type(user):
 
 async def check_command(ctx):
 
-    if ctx.command.name in dev_commands:
+    if ctx.command.name in special_commands:
         return True  # Devs (so me) can always use dev commands
     if not check_type(ctx.author):
         if ctx.command.name in command_defaults:
