@@ -50,24 +50,21 @@ extensions = [
 converter = commands.RoleConverter()
 
 def testFunc(ctx: commands.Context) -> bool:
-    print('work bruh')
-    print("guild id bruh", c.guild.id == 437048931827056642)
-    return c.guild.id == 437048931827056642
+    return ctx.guild.id == 437048931827056642
 
 @bot.command(name="helper")
 @commands.check(testFunc)
 async def toggle_helper_role(ctx: commands.Context, name: str):
-
-    role = await converter.convert(ctx, f'help-{name}')
-
-    if not role:
+    try:
+        role = await converter.convert(ctx, f'help-{name}')
+    except commands.errors.BadArgument:
         await ctx.send("nope nope doesnt exist nice try")
         return
     
     if role in ctx.author.roles:
-        await ctx.author.remove_role(role)
+        await ctx.author.remove_roles(role)
     else:
-        await ctx.author.add_role(role)
+        await ctx.author.add_roles(role)
     
     await ctx.send('done')
         

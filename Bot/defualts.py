@@ -43,4 +43,5 @@ command_defaults = {
     "rtogglelist": 32,
     "emojimax": 32,
     "strike": 8192,
+    "whois": 0,
 }

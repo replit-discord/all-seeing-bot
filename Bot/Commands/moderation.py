@@ -5,6 +5,7 @@ from discord.ext import commands
 from utils import get_muted_role, perm_cache
 from tools.read_write import read, write
 from utils import find_date, InvalidDate
+from random import randint
 
 
 class Moderation(commands.Cog, name='moderation'):
@@ -299,6 +300,40 @@ class Moderation(commands.Cog, name='moderation'):
         )
         # print(ban_emoji_content)
         await ctx.send(embed=embed)
+    
+    @commands.command(name='whois')
+    async def whois(self, ctx: commands.Context, user: discord.Member):
+        timestamp: datetime.timestamp = user.created_at
+        joined_at: datetime.timestamp = user.joined_at
+
+        timestamp_str = timestamp.strftime('%m/%d/%Y')
+        joined_at_str = joined_at.strftime('%m/%d/%Y')
+
+        embed = discord.Embed(
+            title=f'**{user}**',
+            description=f'''
+            **Joined**: {joined_at_str}
+            **Account creation**: {timestamp_str}
+            ''',
+            color=randint(0, 0xFFFFFF)
+        )
+
+        embed.set_thumbnail(url=user.avatar_url)
+
+        embed.timestamp = timestamp
+        embed.set_footer(text=user.id)
+
+        embed.add_field(
+            name='**Roles**',
+            value=", ".join([f'<@&{r.id}>' for r in user.roles])
+        )
+
+        await ctx.send(embed=embed)
+        
+        
+        
+
+        
 
     @commands.command(name='kick', aliases=['k'])
     async def kick(self, ctx, user: discord.Member, *_):
