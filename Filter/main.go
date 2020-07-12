@@ -91,6 +91,7 @@ func check(rawStr *C.char, rawWords []*C.struct_word) bool {
 	for _, w := range rawWords {
 		cleanString := strings.ToLower(C.GoString(w.word))
 		cleanString = regexp.QuoteMeta(cleanString)
+		fmt.Println("CleanString", cleanString)
 		words[cleanString] = uint8(w.paranoid)
 	}
 
@@ -103,7 +104,7 @@ func check(rawStr *C.char, rawWords []*C.struct_word) bool {
 		}
 		for _, p := range prefixes {
 			for _, s := range suffixes {
-				banned[p+v+s] = v
+				banned[regexp.QuoteMeta(p+v+s)] = v
 			}
 		}
 	}
@@ -125,11 +126,11 @@ func check(rawStr *C.char, rawWords []*C.struct_word) bool {
 	cacheID := ider.getID(words)
 	reg, ok := cacher.getItem(cacheID)
 
-	if !ok || reg == nil {
+	if !ok {
 		for w, v := range banned {
 			chars := make([]string, 0)
 			for _, c := range w {
-				chars = append(chars, string(c))
+				chars = append(chars, regexp.QuoteMeta(string(c)))
 			}
 			if words[v] <= 1 {
 				formattedWords[pos] = fmt.Sprintf("(\\b(%s)\\b)", strings.Join(chars, "\\s*"))
@@ -138,22 +139,14 @@ func check(rawStr *C.char, rawWords []*C.struct_word) bool {
 			}
 			pos++
 		}
-		var err error
-		reg, err = regexp.Compile(strings.Join(formattedWords, "|"))
 
-		if err != nil {
-			panic(err)
-		}
+		reg, _ = regexp.Compile(strings.Join(formattedWords, "|"))
 
 		cacher.setItem(cacheID, reg)
 
 	}
 	match := reg.FindString(str)
-	// if match != "" {
-	// 	return C.int(1)
-	// } else {
-	// 	return C.int(0)
-	// }
+
 	return match != ""
 }
 
