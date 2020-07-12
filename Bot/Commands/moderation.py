@@ -300,7 +300,7 @@ class Moderation(commands.Cog, name='moderation'):
         )
         # print(ban_emoji_content)
         await ctx.send(embed=embed)
-    
+
     @commands.command(name='whois')
     async def whois(self, ctx: commands.Context, user: discord.Member):
         timestamp: datetime.timestamp = user.created_at
@@ -325,15 +325,10 @@ class Moderation(commands.Cog, name='moderation'):
 
         embed.add_field(
             name='**Roles**',
-            value=", ".join([f'<@&{r.id}>' for r in user.roles])
+            value=", ".join([f'<@&{r.id}>' for r in user.roles[::-1]])
         )
 
         await ctx.send(embed=embed)
-        
-        
-        
-
-        
 
     @commands.command(name='kick', aliases=['k'])
     async def kick(self, ctx, user: discord.Member, *_):
