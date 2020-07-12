@@ -853,7 +853,7 @@ class Moderation(commands.Cog, name='moderation'):
         await write('warn_list', warn_dict)
         await ctx.send("Warning / strike removed.")
 
-    @bot.command(name="helper")
+    @commands.command(name="helper")
     @commands.check(testFunc)
     async def toggle_helper_role(ctx: commands.Context, name: str):
 
