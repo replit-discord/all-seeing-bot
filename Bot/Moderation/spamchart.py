@@ -84,7 +84,7 @@ async def check_expire():
             if muted in author.roles:
                 try:
                     await d[0].delete()
-                except discord.NotFound:
+                except:
                     pass
         new_data[g] = data
     spam_chart.cache('spam_chart', sc)

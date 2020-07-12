@@ -71,19 +71,28 @@ class Moderation(commands.Cog, name='moderation'):
         perm_cache.reset_user(user)
 
     @commands.command(name='banword', aliases=['bw'])
-    async def ban_word(self, ctx, *_):
+    async def ban_word(self, ctx, word: str, paranoia: int):
         '''Bans a phrase from user messages.
         ```css
-        example usage:
+        Example Usage:
         ``````py
-        ?banword badword  # Bans "badword from messages"
+        ?banword badword 0  # Bans "badword from messages with level 0 paranoia."
         ``````py
-        ?bw bad word  # Bans "bad word" from messages'''
+        ?bw badword 2  # Bans "bad word" from messages with paranoia level 2.
+
+
+        Levels of paranoia:
+        ```k
+        (assume "badword" is banned)
+        0 | Exact word - badword (✓) bad word (✓) motherbadword (x) nobadwordplz (x)
+        1 | Root word match - badword (✓) bad word (✓) motherbadword (✓) nobadwordplz (x)
+        2 | Any match - badword (✓) bad word (✓) motherbadword (✓) nobadwordplz (✓)
+        ```
+
+        '''
         msg = ctx.message
         guild = ctx.guild
         author = ctx.author
-        phrase = msg.content.split(None, 1)[1]
-        lower_phrase = phrase.lower()
         fd = await read('banWords', True, False)
 
         if guild.id in fd:
@@ -92,29 +101,28 @@ class Moderation(commands.Cog, name='moderation'):
         else:
             guild_list = []
 
-        if lower_phrase not in guild_list:
-            guild_list.append(lower_phrase)
-            failed = False
+        if word.lower() not in [w['word'] for w in guild_list]:
+            print('appending')
+            guild_list.append({'word': word.lower(), 'paranoia': paranoia})
 
         else:
             await ctx.send(
-                f"`{phrase}` is already in the server's ban list!"
+                f"`{word}` is already in the server's ban list!"
             )
-            failed = True
+            return
 
-        if not failed:
-            fd[guild.id] = guild_list
-            await write('banWords', fd, False)
-            await self.log(
-                ctx,
-                f"<@{author.id}> added `{phrase}` to the server's ban list.",
-                '**Banword**',
-                showauth=True
-            )
-            await ctx.send(f"`{phrase}` has been added to the server's ban list.")
+        fd[guild.id] = guild_list
+        await write('banWords', fd, False)
+        await self.log(
+            ctx,
+            f"<@{author.id}> added `{word}` to the server's ban list.",
+            '**Banword**',
+            showauth=True
+        )
+        await ctx.send(f"`{word}` has been added to the server's ban list.")
 
     @commands.command(name='unbanword', aliases=['unbw'])
-    async def unban_word(self, ctx, *_):
+    async def unban_word(self, ctx, word: str):
         '''Unbans a string or word from user messages.
         ```css
         example usage:
@@ -125,8 +133,6 @@ class Moderation(commands.Cog, name='moderation'):
         msg = ctx.message
         guild = ctx.guild
         author = ctx.author
-        phrase = msg.content.split(None, 1)[1]
-        lower_phrase = phrase.lower()
         fd = await read('banWords', True, False)
 
         if guild.id in fd:
@@ -135,26 +141,26 @@ class Moderation(commands.Cog, name='moderation'):
         else:
             guild_list = []
 
-        if lower_phrase in guild_list:
-            guild_list.remove(lower_phrase)
-            failed = False
+        word = [w for w in guild_list if w['word'] == word]
 
-        else:
+        if words == []:
             await ctx.send(
-                f"`{phrase}` is not in the server's ban list!"
+                f"`{word}` is not in the server's ban list!"
             )
-            failed = True
 
-        if not failed:
-            fd[guild.id] = guild_list
-            await write('banWords', fd, False)
-            await self.log(
-                ctx,
-                f"<@{author.id}> removed `{phrase}` from the server's ban list.",
-                '**Banword**',
-                showauth=True
-            )
-            await ctx.send(f"`{phrase}` has been removed from the server's ban list.")
+        word = word[0]
+
+        guild_list.remove(word)
+
+        fd[guild.id] = guild_list
+        await write('banWords', fd, False)
+        await self.log(
+            ctx,
+            f"<@{author.id}> removed `{word}` from the server's ban list.",
+            '**Banword**',
+            showauth=True
+        )
+        await ctx.send(f"`{word}` has been removed from the server's ban list.")
 
     @commands.command(name='banreaction', aliases=['br'])
     async def ban_reaction(self, ctx, *_):
@@ -266,7 +272,10 @@ class Moderation(commands.Cog, name='moderation'):
         if ban_words is not []:
             ban_word_content = '```css\n'
             for a in range(len(ban_words)):
-                ban_word_content += f'{a+1}: {ban_words[a]}\n'
+                word = ban_words[a]
+                paranoia = word['paranoia']
+
+                ban_word_content += f'{a+1}: (Paranoia: {paranoia}) {word["word"]}\n'
             ban_word_content += '```'
         else:
             ban_word_content = 'None'
@@ -313,11 +322,13 @@ class Moderation(commands.Cog, name='moderation'):
                     ('**Reason:**', reason)
                 ]
             )
+            await user.kick(reason=reason)
         else:
             await self.log(
                 ctx,
-                f'<@{author.id} kicked <@{user.id}>'
+                f'<@{author.id}> kicked <@{user.id}>'
             )
+            await user.kick()
 
     @commands.command(name='ban')
     async def ban(self, ctx, user: discord.Member, time=None, *argv):
@@ -370,6 +381,7 @@ class Moderation(commands.Cog, name='moderation'):
             description=f'<@{user.id}> has been banned.',
             color=0xff0000
         )
+        await user.ban()
         await ctx.send(embed=embed)
 
     @commands.command(name='unban', aliases=['pardon'])
@@ -429,8 +441,8 @@ class Moderation(commands.Cog, name='moderation'):
                     guild_list = mute_list[str(guild.id)]
                 else:
                     guild_list = {}
-                # print(guild_list)
                 guild_list[user.id] = end_date
+
                 mute_list[str(guild.id)] = guild_list
                 await write('muteList', mute_list)
                 fields.append(

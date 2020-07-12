@@ -85,7 +85,7 @@ def login():
 
     session['oauth2_state'] = state
 
-    # print(state)
+    # # print(state)
     return redirect(authorization_url)
 
 
@@ -147,7 +147,7 @@ def load(guild_id):
             is_perm = True
     else:
         is_perm = True
-    print(request.args)
+    # print(request.args)
     request_data, template_data = get_data(request_data, template_data)
 
     for r in info['roles']:
@@ -167,7 +167,7 @@ def load(guild_id):
                 template_data['channel_name'] = c[0]
                 break
 
-    # print(is_perm, 'IS PERM')
+    # # print(is_perm, 'IS PERM')
     if is_perm:
         data = requests.get(
             f'{BOT_SITE}/getperms',
@@ -175,7 +175,7 @@ def load(guild_id):
 
         perms = data['perms']
 
-        # print(perms)
+        # # print(perms)
         template_data['form'] = generate_perm_field(perms)
         return render_template('perms.jinja2', **template_data)
     else:
@@ -183,7 +183,7 @@ def load(guild_id):
         resp = requests.get(
             f'{BOT_SITE}/getcommands',
             data=request_data)
-        # print(resp)
+        # # print(resp)
         data = resp.json()
         commands = data['cogs']
         template_data['form'] = generate_command_field(commands)
@@ -209,7 +209,7 @@ def manage(guild_id):
     guild_name = None
 
     for g in guilds:
-        # print(g)
+        # # print(g)
         if g['id'] == guild_id:
             guild_name = g['name']
             if not perm_check(g):
@@ -226,7 +226,7 @@ def manage(guild_id):
         role = request.args['r']
     else:
         role = None
-    print(request.args)
+    # print(request.args)
     return render_template(
         'manage.jinja2',
         user=user,
@@ -248,7 +248,7 @@ def submit():
             is_perm = True
     else:
         is_perm = True
-    # print(is_perm, 'IS PERM', request.args)
+    # # print(is_perm, 'IS PERM', request.args)
     if not is_perm:
         form = CommandsForm(request.form)
         if form.validate():
@@ -266,13 +266,13 @@ def submit():
         return 'Nice try'
     if session['GUILD_ID'] != guild_id:
         return 'Nice try'
-    print(data_encoded)
+    # print(data_encoded)
     request_data = {'data': data_encoded, 'guild': guild_id}
     if 'c' in request.args:
         request_data['channel'] = request.args['c']
     if 'r' in request.args:
         request_data['role'] = request.args['r']
-    print('posting')
+    # print('posting')
     resp = requests.post(
         f'{BOT_SITE}/submitperms',
         data=request_data,
@@ -280,7 +280,7 @@ def submit():
 			'token': str(TOKEN),
 		}
     )
-    print(resp)
+    # print(resp)
 
     tab = 'perm'
 

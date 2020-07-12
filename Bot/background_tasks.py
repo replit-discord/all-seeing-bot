@@ -92,11 +92,28 @@ async def check_mute():
     await write('muteList', mute_list)
 
 
+async def spam_chart_daemon(bot):
+    while True:
+        print("Clearing spamchart")
+        try:
+            await check_expire()
+        except Exception as e:
+            traceback_message = traceback.format_exc()
+            out = sys.exc_info()
+
+            print(traceback_message)
+            print('\n\\nn' + '>' * 20 +'\nTRACEBACK_MSG\n\n\n',traceback_message, '\n<' * 20, '\n\n\n')
+            print('\n\\nn' + '>' * 20 +'\nOUT\n\n\n', out, '\n<' * 20, '\n\n\n')
+            print('\n\\nn' + '>' * 20 +'\nE\n\n\n', e, '\n<' * 20, '\n\n\n')
+
+
+        await asyncio.sleep(1)
+
+
 async def bg_tasks(client):
     global bot
     bot = client
     tasks = [
-        check_expire,
         check_ban,
         check_mute
     ]

@@ -1,0 +1,169 @@
+<link rel="stylesheet" href="/css/manage.css" />
+<div class="columns">
+  <div class="column col-8">
+    <ul class="tab tab-block">
+      <li class="tab-item">
+        <a onclick="perms()" style="cursor: pointer;" id="permsTab">Perms</a>
+      </li>
+      <li class="tab-item">
+        <a onclick="commands()" style="cursor: pointer;" id="commandsTab"
+          >Commands</a
+        >
+      </li>
+    </ul>
+  </div>
+  <div class="column col-16">
+    <div class="dropdown dropdown-right float-right">
+      <a class="btn btn-primary dropdown-toggle" tabindex="5">
+        {% if channel_name != None %} #{{ channel_name }} {% else %} Channels
+        {%endif%}
+        <i class="icon icon-caret"></i>
+      </a>
+      <ul class="menu text-left p-absolute" style="z-index: 909;">
+        <li class="menu-item">
+          <a style="cursor: pointer;" id="channelGeneral">Default Settings</a>
+        </li>
+        {% for cat in channels %}
+          <li class="divider" data-content="{{ cat[0] }}"></li>
+          {% for c in cat[1] %} 
+            <li class="menu-item">
+              <a style="cursor: pointer;" id="channel{{c[1]}}">
+                #{{ c[0] }}
+              </a>
+            </li>
+          {% endfor %}
+        {% endfor %} 
+      </ul>
+    </div>
+    <div class="dropdown dropdown-right float-right">
+      <a class="btn btn-primary dropdown-toggle" tabindex="5">
+        {% if role_name != None %} @{{ role_name }} {% else %} @everyone
+        {%endif%}
+        <i class="icon icon-caret"></i>
+      </a>
+      <ul class="menu text-left p-absolute" style="z-index: 909;">
+        {% for r in roles %}
+
+        <li class="menu-item">
+          <a style="cursor: pointer;" id="role{{r[1]}}">
+            {% if r[0] != '@everyone' %} @{{ r[0] }} {% else %} {{ r[0] }} {%
+            endif %}
+          </a>
+        </li>
+
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+<br />
+
+<form
+  action="/submit?g={{ guild_id }}{%if channel != None%}&c={{channel}}{%endif%}{% if role != None%}&r={{ role }} {%endif%}"
+  method="POST"
+  id="form"
+>
+  {{ form.hidden_tag() }}
+  <ul class="menu col-5 p-centered">
+    {% for perm in form.perms %}
+    <li class="menu-item">
+      <a>
+        <label class="form-switch" style="cursor: pointer;">
+          {{ perm.hidden_tag() }} {{ perm.check() }}<i class="form-icon"></i>{{
+          perm.check.label }}
+        </label>
+      </a>
+    </li>
+    {% endfor %}
+    <br />
+    <li class="menu-item py-1">
+      {{ form.submit() }}
+    </li>
+  </ul>
+</form>
+
+<script>
+  function addChannelLink(channelId) {
+  	if (channelId === 'General') {
+  			document.getElementById("channelGeneral").addEventListener('click', () => {
+  			let args = [
+  				"tab=perms"
+  			]
+  			if (role != null) {
+  				args.push(role)
+  			}
+  			channel = null
+  			history.pushState(null, null, "?" + args.join('&'))
+  			let url = "/load/{{ guild_id }}?" + args.join('&')
+
+  			perms(url)
+  			})
+  	} else {
+  		document.getElementById("channel" + channelId).addEventListener('click', () => {
+  			let args = ["tab=perms"]
+  			if (role != null) {
+  				args.push(role)
+  			}
+  			console.log(args)
+  			channel = 'c=' + channelId
+  			args.push(channel)
+  			history.pushState(null, null, "?" + args.join('&'))
+  			let url = "/load/{{ guild_id }}?" + args.join('&')
+  			console.log(url)
+  			perms(url)
+  		})
+  	}
+  }
+  
+  {% for cat in channels %}
+    {% for c in cat[1] %}
+      {% if c[1] != 'cat' %}
+        addChannelLink('{{c[1]}}')
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+  addChannelLink('General')
+
+
+  function addRoleLink(roleId) {
+  	document.getElementById("role" + roleId).addEventListener('click', () => {
+  		let args = ["tab=perms"]
+
+  		console.log(args)
+  		role = 'r=' + roleId
+  		args.push(role)
+  		if (channel != null) {
+  			args.push(channel)
+  		}
+  		history.pushState(null, null, "?" + args.join('&'))
+  		let url = "/load/{{ guild_id }}?" + args.join('&')
+  		console.log(url)
+  		perms(url)
+  	})
+  }
+
+  {% for r in roles %}
+
+  	addRoleLink('{{r[1]}}')
+
+  {% endfor %}
+
+  function setup() {
+  	let args = ["tab=perms"]
+
+  	if (channel != null) {
+  		args.push(channel)
+  	}
+  	if (role != null) {
+  		args.push(role)
+  	}
+  	history.pushState(null, null, "?" + args.join('&'))
+  	let url = "/load/{{ guild_id }}?" + args.join('&')
+  	document.getElementById("commandsTab").classList.remove('active')
+  	console.log('here')
+  	document.getElementById("permsTab").classList.add('active')
+  }
+
+  setup()
+</script>

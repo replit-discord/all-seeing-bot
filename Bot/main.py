@@ -4,7 +4,7 @@ import discord
 import asyncio
 import webserver
 from discord.ext import commands
-from background_tasks import bg_tasks
+from background_tasks import bg_tasks, spam_chart_daemon
 from utils import check_command, is_dev
 import importlib
 
@@ -62,6 +62,7 @@ async def on_ready():
     )
     # print(len(bot.commands))
     if not started():
+        bot.loop.create_task(spam_chart_daemon(bot))
         bot.loop.create_task(bg_tasks(bot))
 
     # print('ready')
