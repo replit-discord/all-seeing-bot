@@ -142,7 +142,7 @@ func check(rawStr *C.char, rawWords []*C.struct_word) bool {
 		cacher.setItem(cacheID, reg)
 
 	}
-
+	fmt.Println()
 	match := reg.FindString(str)
 	// if match != "" {
 	// 	return C.int(1)

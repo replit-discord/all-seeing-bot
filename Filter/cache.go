@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"time"
@@ -45,6 +46,7 @@ func (c *objCacher) getItem(key string) (*regexp.Regexp, bool) {
 
 	// Reset the expiration
 	i.expiration = time.Now().Add(time.Minute * 30)
+	fmt.Println(i)
 	return i.value, true
 }
 
