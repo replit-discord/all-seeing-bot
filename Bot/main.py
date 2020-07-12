@@ -47,6 +47,25 @@ extensions = [
     'Other.logger'
 ]
 
+@bot.command(name="helper")
+@commands.check(lambda c: c.guild.id == 437048931827056642)
+async def toggle_helper_role(ctx: commands.Context, name: str):
+
+    role = await commands.RoleConverter.convert(ctx, f'help-{name}')
+
+    if not role:
+        await ctx.send("nope nope doesnt exist nice try")
+        return
+    
+    if role in ctx.author.roles:
+        await ctx.author.remove_role(role)
+    else:
+        await ctx.author.add_role(role)
+    
+    await ctx.send('done')
+        
+
+
 if __name__ == '__main__':
     for extension in extensions:
         bot.load_extension(extension)
