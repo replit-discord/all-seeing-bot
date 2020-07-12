@@ -498,6 +498,7 @@ def check_type(user):
 async def check_command(ctx):
 
     if ctx.command.name in special_commands:
+        print("returning yes for", ctx.command.name)
         return True  # Devs (so me) can always use dev commands
     if not check_type(ctx.author):
         if ctx.command.name in command_defaults:

@@ -7,6 +7,12 @@ from tools.read_write import read, write
 from utils import find_date, InvalidDate
 
 
+def testFunc(ctx: commands.Context) -> bool:
+    print('work bruh')
+    print("guild id bruh", c.guild.id == 437048931827056642)
+    return c.guild.id == 437048931827056642
+
+
 class Moderation(commands.Cog, name='moderation'):
     '''Moderation Commands'''
 
@@ -846,6 +852,23 @@ class Moderation(commands.Cog, name='moderation'):
         warn_dict[str(guild.id)] = guild_warns
         await write('warn_list', warn_dict)
         await ctx.send("Warning / strike removed.")
+
+    @bot.command(name="helper")
+    @commands.check(testFunc)
+    async def toggle_helper_role(ctx: commands.Context, name: str):
+
+        role = await commands.RoleConverter.convert(ctx, f'help-{name}')
+
+        if not role:
+            await ctx.send("nope nope doesnt exist rip")
+            return
+
+        if role in ctx.author.roles:
+            await ctx.author.remove_role(role)
+        else:
+            await ctx.author.add_role(role)
+
+        await ctx.send('done')
 
     @commands.command(name='purge')
     async def purge(self, ctx, ammount: int, user: discord.Member = None):

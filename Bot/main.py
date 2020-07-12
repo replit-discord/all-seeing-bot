@@ -47,8 +47,13 @@ extensions = [
     'Other.logger'
 ]
 
+def testFunc(ctx: commands.Context) -> bool:
+    print('work bruh')
+    print("guild id bruh", c.guild.id == 437048931827056642)
+    return c.guild.id == 437048931827056642
+
 @bot.command(name="helper")
-@commands.check(lambda c: c.guild.id == 437048931827056642)
+# @commands.check(testFunc)
 async def toggle_helper_role(ctx: commands.Context, name: str):
 
     role = await commands.RoleConverter.convert(ctx, f'help-{name}')
