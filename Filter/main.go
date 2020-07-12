@@ -89,7 +89,9 @@ func check(rawStr *C.char, rawWords []*C.struct_word) bool {
 	words := make(map[string]uint8)
 
 	for _, w := range rawWords {
-		words[strings.ToLower(C.GoString(w.word))] = uint8(w.paranoid)
+		cleanString := strings.ToLower(C.GoString(w.word))
+		cleanString = regexp.QuoteMeta(cleanString)
+		words[cleanString] = uint8(w.paranoid)
 	}
 
 	// This should make sure that we dont get any invalid regex
@@ -123,7 +125,7 @@ func check(rawStr *C.char, rawWords []*C.struct_word) bool {
 	cacheID := ider.getID(words)
 	reg, ok := cacher.getItem(cacheID)
 
-	if !ok {
+	if !ok || reg == nil {
 		for w, v := range banned {
 			chars := make([]string, 0)
 			for _, c := range w {
@@ -136,13 +138,16 @@ func check(rawStr *C.char, rawWords []*C.struct_word) bool {
 			}
 			pos++
 		}
+		var err error
+		reg, err = regexp.Compile(strings.Join(formattedWords, "|"))
 
-		reg, _ = regexp.Compile(strings.Join(formattedWords, "|"))
+		if err != nil {
+			panic(err)
+		}
 
 		cacher.setItem(cacheID, reg)
 
 	}
-	fmt.Println()
 	match := reg.FindString(str)
 	// if match != "" {
 	// 	return C.int(1)
