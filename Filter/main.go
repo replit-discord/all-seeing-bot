@@ -89,7 +89,6 @@ func check(rawStr *C.char, rawWords []*C.struct_word) bool {
 	words := make(map[string]uint8)
 
 	for _, w := range rawWords {
-		fmt.Println(strings.ToLower(C.GoString(w.word)), w.paranoid)
 		words[strings.ToLower(C.GoString(w.word))] = uint8(w.paranoid)
 	}
 
