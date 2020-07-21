@@ -144,7 +144,7 @@ class Moderation(commands.Cog, name='moderation'):
 
         word = [w for w in guild_list if w['word'] == word]
 
-        if words == []:
+        if word == []:
             await ctx.send(
                 f"`{word}` is not in the server's ban list!"
             )
