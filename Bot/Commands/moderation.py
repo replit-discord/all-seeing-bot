@@ -142,14 +142,14 @@ class Moderation(commands.Cog, name='moderation'):
         else:
             guild_list = []
 
-        word = [w for w in guild_list if w['word'] == word]
+        exists = [w for w in guild_list if w['word'] == word]
 
-        if word == []:
+        if exists == []:
             await ctx.send(
                 f"`{word}` is not in the server's ban list!"
             )
 
-        word = word[0]
+        word = exists[0]
 
         guild_list.remove(word)
 

@@ -121,6 +121,8 @@ func check(rawStr *C.char, rawWords []*C.struct_word) bool {
 
 	str = strings.ToLower(str)
 
+	fmt.Println("what the hell", str)
+
 	formattedWords := make([]string, len(banned))
 	pos := 0
 	cacheID := ider.getID(words)
