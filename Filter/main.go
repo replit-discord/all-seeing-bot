@@ -91,7 +91,6 @@ func check(rawStr *C.char, rawWords []*C.struct_word) bool {
 	for _, w := range rawWords {
 		cleanString := strings.ToLower(C.GoString(w.word))
 		cleanString = regexp.QuoteMeta(cleanString)
-		fmt.Println("CleanString", cleanString)
 		words[cleanString] = uint8(w.paranoid)
 	}
 
@@ -120,8 +119,6 @@ func check(rawStr *C.char, rawWords []*C.struct_word) bool {
 	str = ignoreRegex.ReplaceAllString(str, "")
 
 	str = strings.ToLower(str)
-
-	fmt.Println("what the hell", str)
 
 	formattedWords := make([]string, len(banned))
 	pos := 0

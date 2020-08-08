@@ -1,6 +1,7 @@
 package main
 
 import (
+	"reflect"
 	"regexp"
 	"strconv"
 	"time"
@@ -65,17 +66,9 @@ type listIDer struct {
 }
 
 func (l *listIDer) getID(banned map[string]uint8) string {
-	for i, v := range l.data {
-		bad := false
-		for w, p := range v {
-			d, ok := banned[w]
-			if !ok || d != p {
-				bad = true
-				break
-			}
-		}
 
-		if !bad {
+	for i, v := range l.data {
+		if reflect.DeepEqual(banned, v) {
 			return i
 		}
 	}

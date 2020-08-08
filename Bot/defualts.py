@@ -44,4 +44,6 @@ command_defaults = {
     "emojimax": 32,
     "strike": 8192,
     "whois": 0,
+    "requestnick": 0,
+    "modnickchannel": 32,
 }

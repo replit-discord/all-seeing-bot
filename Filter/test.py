@@ -24,7 +24,31 @@ words = [
     Word(1, b'bye'),
     Word(2, b'lol'),
     Word(1, b'anime'),
-    Word(2, b'word')
+    Word(2, b'word'),
+    Word(1, b'fuck')
+]
+
+
+voidData = []
+
+for w in words:
+    voidData.append(ctypes.cast(ctypes.pointer(w), ctypes.c_void_p))
+
+sliceData = (ctypes.c_void_p * len(voidData))(*voidData)
+thing = GoSlice(sliceData, len(voidData), len(voidData))
+
+filter.test(bytes(input("String to test \n> "), 'utf-8'), thing)
+
+
+# Feel free to add more words.
+words = [
+    # Word(0, b'hello'),-
+    Word(1, b'bye'),
+    Word(2, b'lol'),
+    Word(1, b'anime'),
+    Word(2, b'word'),
+    Word(1, b'fuck'),
+    Word(1, b'oof')
 ]
 
 
@@ -39,4 +63,4 @@ thing = GoSlice(sliceData, len(voidData), len(voidData))
 
 while True:
 
-    filter.test(bytes(input("String to test \n> "), 'utf-8'), thing)
+    filter.test(bytes(input("String to test (v2)\n> "), 'utf-8'), thing)

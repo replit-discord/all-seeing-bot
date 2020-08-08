@@ -15,6 +15,7 @@ var suffixes = []string{
 	"er",
 	"it",
 	"hat",
+	"ed",
 	"wipe",
 	"",
 	"",

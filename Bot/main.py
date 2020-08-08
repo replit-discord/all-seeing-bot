@@ -39,6 +39,7 @@ extensions = [
     'Commands.dev_cmds',
     'Commands.data_tweaking',
     # 'Other.Starboard.main',
+    'Commands.nicks',
     'Commands.moderation',
     'Moderation.main',
     'Commands.fun',
