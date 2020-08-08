@@ -27,10 +27,6 @@ class Cache:
 
     def read_cache(self, key):
         cache = self.data
-        with open('wtf.json', 'w') as f:
-            f.write(json.dumps(cache, indent=2, sort_keys=True))
-        with open('wtf2.json', 'w') as f:
-            f.write(str(self.data))
 
         if key in cache:
 
