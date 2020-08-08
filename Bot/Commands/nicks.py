@@ -130,6 +130,9 @@ class Nicks(commands.Cog, name='nicks'):
         else:
             message = await channel.send(embed=get_embed(ctx.author, nick))
 
+            await message.add_reaction('✅')
+            await messag.add_reaction('❌')
+
         data = {
             str(ctx.guild.id): {
                 'users': {
