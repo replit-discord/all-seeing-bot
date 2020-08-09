@@ -83,6 +83,8 @@ class Nicks(commands.Cog, name='nicks'):
 
         del fd[str(guild.id)]['users'][str(user.id)]
 
+        await write('nick_stuff', fd)
+
     @commands.command(name='modnickchannel', aliases=['mnc'])
     async def set_channel(self, ctx: commands.Context, channel: discord.TextChannel):
         fd = await read('nick_stuff')
