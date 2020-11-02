@@ -1,0 +1,25 @@
+version: '3'
+services:
+  app:
+    user: root
+    build: .
+    environment:
+        BOT_TOKEN: weee # Put bot token here
+    volumes:
+      - .:/opt/app
+    depends_on:
+      - postgres
+      - redis
+    links:
+      - postgres
+      - redis
+  postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile-PG
+    environment:
+      - POSTGRES_USER=allawesome497
+      - POSTGRES_DB=allseeingbot
+      - POSTGRES_HOST_AUTH_METHOD=trust
+  redis:
+    image: redis:6.0.9-alpine
