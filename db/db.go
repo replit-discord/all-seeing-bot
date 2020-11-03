@@ -50,6 +50,16 @@ func Connect() {
 
 }
 
+// GetDB returns the psql DB client
+func GetDB() *gorm.DB {
+	return db
+}
+
+// GetStore returns the redis client
+func GetStore() *redis.Client {
+	return store
+}
+
 // Close is used to close the connetion to the DB
 func Close() {
 	store.Close()

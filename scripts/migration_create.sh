@@ -32,22 +32,5 @@ var $(
 EOF
 
 
-cat >"list.go" <<EOF
-package migrations
-
-import "github.com/go-gormigrate/gormigrate/v2"
-
-var migrations = []*gormigrate.Migration{
-$(for f in $(ls --ignore migrations.go --ignore list.go)
-do
-    echo "	$(echo $f |
-        grep -m 1 -a --regexp='[^-]*' -o |
-        head -n 1 |
-        sed -r 's/_([a-z])/\U\1/gi' |
-        sed -r 's/^([A-Z])/\l\1/'
-    ),"
-done )
-}
-EOF
-
 echo Migration created in db/migrations/$NAME-$ID.go
+echo Don\'t forget to add it to the list

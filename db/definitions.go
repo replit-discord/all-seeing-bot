@@ -55,3 +55,20 @@ type GuildPermission struct {
 	Permissions []byte `json:"permissions"`
 	gorm.Model
 }
+
+// ModMailThread is the type for rows in mod_mail_threads
+type ModMailThread struct {
+	gorm.Model
+	GuildID  string            `json:"guild_id"   gorm:"<-:create;not null"`
+	UserID   string            `json:"user_id"    gorm:"<-:create;not null"`
+	Messages []*ModMailMessage `gorm:"foreignKey:ThreadID"`
+}
+
+// ModMailMessage is the type for the sql rows for mod mail messages
+type ModMailMessage struct {
+	gorm.Model
+	MessageID string         `json:"guild_id"   gorm:"<-:create;not null; unique"`
+	ChannelID string         `json:"channel_id" gorm:"<-:create;not null"`
+	ThreadID  uint           `json:"thread_id"  gorm:"<-:create;not null"`
+	Thread    *ModMailThread `gorm:"foreignKey:ThreadID"`
+}
