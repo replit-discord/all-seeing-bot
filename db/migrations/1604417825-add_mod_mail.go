@@ -7,14 +7,16 @@ import (
 
 type modMailThread struct {
 	gorm.Model
-	GuildID  string            `json:"guild_id"   gorm:"<-:create;not null"`
-	UserID   string            `json:"user_id"    gorm:"<-:create; not null"`
-	Messages []*modMailMessage `gorm:"foreignKey:ThreadID"`
+	GuildID   string            `json:"guild_id"     gorm:"<-:create;not null"`
+	ChannelID string            `json:"channel_id"   gorm:"<-:create;not null"`
+	UserID    string            `json:"user_id"      gorm:"<-:create; not null"`
+	Messages  []*modMailMessage `gorm:"foreignKey:ThreadID"`
 }
 
 type modMailMessage struct {
 	gorm.Model
 	MessageID string         `json:"guild_id"   gorm:"<-:create;not null; unique"`
+	Content   string         `json:"content"    gorm:"not null;"`
 	ChannelID string         `json:"channel_id" gorm:"<-:create;not null"`
 	ThreadID  uint           `json:"thread_id"  gorm:"<-:create;not null"`
 	Thread    *modMailThread `gorm:"foreignKey:ThreadID"`

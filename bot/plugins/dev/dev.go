@@ -1,21 +1,19 @@
 package dev
 
 import (
-	"regexp"
-	"strings"
-
 	"github.com/bwmarrin/discordgo"
 	"github.com/repl-it-discord/all-seeing-bot/bot/plugins"
 	"github.com/repl-it-discord/all-seeing-bot/bot/types"
 	"github.com/repl-it-discord/all-seeing-bot/util"
 )
 
-type devPlugin struct {
-	*types.BasePlugin
+var plugin = &types.Plugin{
+	Load:     load,
+	Check:    check,
+	Commands: commands,
 }
 
-// Check is the global check applied to all commands in the plugin.
-func (p *devPlugin) Check(m *discordgo.Message) bool {
+func check(m *discordgo.Message) bool {
 	for _, d := range util.DevIDs {
 		if d == m.Author.ID {
 			return true
@@ -25,31 +23,20 @@ func (p *devPlugin) Check(m *discordgo.Message) bool {
 	return false
 }
 
-var queryCommandRegex *regexp.Regexp
-
-var plugin = &devPlugin{BasePlugin: &types.BasePlugin{}}
-
 var commands = []interface{}{
-	&types.Command{
-		Name:   "echo",
-		Plugin: plugin,
+	&types.CleanArgCommand{
+		Name: "echo",
 
 		Exec: echo,
 	},
 }
 
-func check(m discordgo.Message) bool {
-	return true
-}
-
 var bot *discordgo.Session
 
-// Load is used to get plugins and load the plugin
-func (p *devPlugin) Load(s *discordgo.Session) ([]interface{}, error) {
-	p.BasePlugin.Load(s)
+func load(s *discordgo.Session) error {
 	bot = s
 
-	return commands, nil
+	return nil
 }
 
 func init() {
@@ -58,26 +45,30 @@ func init() {
 
 func echo(
 	m *discordgo.Message,
-	args string,
+	args []string,
 ) {
-	// TODO: Also work in dms
-	msg := args
+	msg := util.RepairArgs(args)
 	channelID := m.ChannelID
 
-	if splitArgs := strings.SplitN(args, " ", 2); len(splitArgs) > 1 {
-		if util.ChannelMentionRegex.MatchString(splitArgs[0]) {
-			channelID = util.NumberRegex.FindString(splitArgs[0])
-			msg = splitArgs[1]
-		} else if util.UserMentionRegex.MatchString(splitArgs[0]) {
-			channel, err := bot.UserChannelCreate(util.NumberRegex.FindString(splitArgs[0]))
+	if len(args) > 1 {
+
+		if c, err := util.ParseChannel(bot, m.GuildID, args[0]); err == nil {
+			channelID = c.ID
+			msg = util.RepairArgs(args[1:])
+		} else if m, err := util.ParseMember(bot, m.GuildID, args[0]); err == nil {
+			channel, err := bot.UserChannelCreate(m.User.ID)
 			if err == nil {
 				channelID = channel.ID
-				msg = splitArgs[1]
+				msg = util.RepairArgs(args[1:])
 			}
 		}
 	}
 
 	if _, err := bot.ChannelMessageSend(channelID, msg); err != nil {
 		bot.ChannelMessageSend(m.ChannelID, msg)
+		bot.MessageReactionAdd(m.ChannelID, m.ID, "😢")
+		return
 	}
+
+	bot.MessageReactionAdd(m.ChannelID, m.ID, "🙂")
 }

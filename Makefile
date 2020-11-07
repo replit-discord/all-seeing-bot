@@ -8,11 +8,6 @@ run: build
 build:
 	@go build
 
-migrate: 
-	@if [ $(IS_DOCKER_APP) == yes ]
-	@then
-	@	
-
 create-migration:
 	@./scripts/migration_create.sh
 

@@ -11,16 +11,20 @@ import (
 	"gorm.io/gorm"
 )
 
+type whereParams map[string]interface{}
+
 // GuildConfigType is the type for guild config objects
 type GuildConfigType struct {
-	Prefix   string `json:"prefix"`
-	MuteRole string `json:"muterole"`
+	Prefix            string `json:"prefix"`
+	MuteRole          string `json:"muterole"`
+	ModmailCategoryID string `json:"mod_mail_category_id"`
+	LogChannel        string `json:"log_channel"`
 }
 
 // Value probably does sometihng
 func (j GuildConfigType) Value() (driver.Value, error) {
 	valueString, err := json.Marshal(j)
-	return string(valueString), err
+	return valueString, err
 }
 
 // Scan is used to scan haha great desc
@@ -59,16 +63,26 @@ type GuildPermission struct {
 // ModMailThread is the type for rows in mod_mail_threads
 type ModMailThread struct {
 	gorm.Model
-	GuildID  string            `json:"guild_id"   gorm:"<-:create;not null"`
-	UserID   string            `json:"user_id"    gorm:"<-:create;not null"`
-	Messages []*ModMailMessage `gorm:"foreignKey:ThreadID"`
+	GuildID   string            `json:"guild_id"     gorm:"<-:create;not null"`
+	ChannelID string            `json:"channel_id"   gorm:"<-:create;not null"`
+	UserID    string            `json:"user_id"      gorm:"<-:create;not null"`
+	Messages  []*ModMailMessage `gorm:"foreignKey:ThreadID"`
 }
 
 // ModMailMessage is the type for the sql rows for mod mail messages
 type ModMailMessage struct {
 	gorm.Model
+	Content   string         `json:"content"    gorm:"not null;"`
 	MessageID string         `json:"guild_id"   gorm:"<-:create;not null; unique"`
 	ChannelID string         `json:"channel_id" gorm:"<-:create;not null"`
 	ThreadID  uint           `json:"thread_id"  gorm:"<-:create;not null"`
 	Thread    *ModMailThread `gorm:"foreignKey:ThreadID"`
+}
+
+// GuildMute is the type for sql records / rows used to track mutes + their expirations
+type GuildMute struct {
+	gorm.Model
+	GuildID   string    `json:"guild_id"     gorm:"<-:create;not null"`
+	ExpiresAt time.Time `json:"expires_at"   gorm:"<-:create;"`
+	UserID    string    `json:"user_id"      gorm:"<-:create;not null"`
 }

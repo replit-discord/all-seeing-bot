@@ -5,7 +5,7 @@ echo Enter the snake_case name for the migration.
 read NAME
 export ID=$(date +%s)
 
-cat >"$NAME-$ID.go" <<EOF
+cat >"$ID-$NAME.go" <<EOF
 package migrations
 
 import (

@@ -11,9 +11,19 @@ import (
 	"github.com/repl-it-discord/all-seeing-bot/bot/plugins"
 	"github.com/repl-it-discord/all-seeing-bot/bot/types"
 	"github.com/repl-it-discord/all-seeing-bot/db"
+	"github.com/repl-it-discord/all-seeing-bot/util"
+	"github.com/repl-it-discord/all-seeing-bot/util/perms"
+
+	// Core plugins here (used by other plugins so it should ALWAYS be loaded)
+	_ "github.com/repl-it-discord/all-seeing-bot/bot/plugins/background"
+	_ "github.com/repl-it-discord/all-seeing-bot/bot/plugins/handlers"
+	_ "github.com/repl-it-discord/all-seeing-bot/bot/plugins/logger"
 
 	// Plugin registering
+	_ "github.com/repl-it-discord/all-seeing-bot/bot/plugins/config"
 	_ "github.com/repl-it-discord/all-seeing-bot/bot/plugins/dev"
+	_ "github.com/repl-it-discord/all-seeing-bot/bot/plugins/moderation"
+	// _ "github.com/repl-it-discord/all-seeing-bot/bot/plugins/modmail"
 )
 
 var bot *discordgo.Session
@@ -36,12 +46,14 @@ const (
 // Run runs the bot
 func Run() {
 	var err error
+
 	bot, err = discordgo.New("Bot " + os.Getenv("BOT_TOKEN"))
-	bot.StateEnabled = true
-	chk(err)
+
+	bot.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAllWithoutPrivileged | discordgo.IntentsGuildMembers)
 
 	// register events
 	bot.AddHandler(ready)
+	bot.AddHandler(handleChannelCreate)
 
 	chk(bot.Open())
 
@@ -62,21 +74,35 @@ func Kill() {
 	}
 }
 
+func handleChannelCreate(s *discordgo.Session, c *discordgo.ChannelCreate) {
+	r, err := util.GetMutedRole(s, c.GuildID, nil)
+
+	if err != nil {
+		return
+	}
+
+	newPermissions := append(c.PermissionOverwrites, &discordgo.PermissionOverwrite{
+		Type: "role",
+		ID:   r,
+		Deny: perms.SendMessages | perms.AddReactions | perms.Connect | perms.Speak,
+	})
+	_, err = s.ChannelEditComplex(c.ID, &discordgo.ChannelEdit{PermissionOverwrites: newPermissions})
+
+	if err != nil {
+		return
+	}
+}
+
 func ready(s *discordgo.Session, event *discordgo.Ready) {
-	s.UpdateStatus(0, "everything")
+	s.UpdateStatus(0, "with your mind")
 	fmt.Printf("Logged in as %s#%s\n", s.State.User.Username, s.State.User.Discriminator)
 
 }
 
 func handleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
-
 	if m.Author.Bot {
 		return
 	}
-
-	// r, t := util.ParseMention(bot, "585606083897458691", m.Content)
-
-	// fmt.Println(r, t)
 
 	config, err := db.GetGuildConfig(m.GuildID)
 
@@ -90,6 +116,11 @@ func handleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func handleCommand(s *discordgo.Session, m *discordgo.MessageCreate, config *db.GuildConfigType) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Recovering from error: %s \n", r)
+		}
+	}()
 
 	cleanString := strings.TrimPrefix(m.Content, config.Prefix)
 
@@ -148,14 +179,15 @@ func handleCommand(s *discordgo.Session, m *discordgo.MessageCreate, config *db.
 
 	plugin := cmd.Plugin
 
-	if pluginWithChecks, ok := plugin.(types.PluginWithChecks); ok {
-		if !pluginWithChecks.Check(m.Message) {
+	if plugin.Check != nil {
+		if !plugin.Check(m.Message) {
 			noPerms()
 			return
 		}
 	}
 
 	for _, check := range cmd.Checks {
+		fmt.Println(check)
 		if !check(m.Message) {
 			noPerms()
 			return

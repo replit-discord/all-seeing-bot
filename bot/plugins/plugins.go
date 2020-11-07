@@ -9,10 +9,10 @@ import (
 	"github.com/repl-it-discord/all-seeing-bot/util"
 )
 
-var plugins = []types.Plugin{}
+var plugins = []*types.Plugin{}
 
 // Register is used to register plugins for the bot
-func Register(plugin types.Plugin) {
+func Register(plugin *types.Plugin) {
 	plugins = append(plugins, plugin)
 }
 
@@ -21,14 +21,17 @@ var commands = []*types.Command{}
 // LoadPlugins iterates through the known plugins and loads them
 func LoadPlugins(s *discordgo.Session) error {
 	for _, plugin := range plugins {
-		cmds, err := plugin.Load(s)
-		if err != nil {
-			return err
+		if plugin.Load != nil {
+			err := plugin.Load(s)
+			if err != nil {
+				return err
+			}
 		}
 
-		for _, cmd := range cmds {
+		for _, cmd := range plugin.Commands {
 			switch c := cmd.(type) {
 			case *types.CleanArgCommand:
+				c.Plugin = plugin
 				commands = append(
 					commands,
 					&types.Command{
@@ -46,6 +49,7 @@ func LoadPlugins(s *discordgo.Session) error {
 				)
 				break
 			case *types.Command:
+				c.Plugin = plugin
 				commands = append(commands, c)
 				break
 			default:
@@ -57,6 +61,15 @@ func LoadPlugins(s *discordgo.Session) error {
 	}
 
 	return nil
+}
+
+// Close is used to close all plugins which need to be closed before the bot shut downs
+func Close() {
+	for _, p := range plugins {
+		if p.Close != nil {
+			p.Close()
+		}
+	}
 }
 
 // GetCommands is used to get the commands from the loaded plugins

@@ -2,6 +2,7 @@ package util
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -17,23 +18,6 @@ func IsAdmin(s *discordgo.Session, m *discordgo.Message) bool {
 	}
 
 	return permissions&int(perms.Administrator) > 0
-}
-
-// HasAnyPermissionsIn returns whether the author of a message has the permissions listed.
-func HasAnyPermissionsIn(s *discordgo.Session, m *discordgo.Message, permissionNodes ...perms.DiscordPermission) bool {
-	permissions, err := s.State.UserChannelPermissions(m.Author.ID, m.ChannelID)
-
-	if err != nil {
-		return false
-	}
-
-	var requiredPerms = 0
-
-	for _, perm := range permissionNodes {
-		requiredPerms |= int(perm)
-	}
-
-	return permissions&requiredPerms > 0
 }
 
 // ParseArgs is used to parse arguments from the provided string
@@ -158,4 +142,120 @@ func ParseMention(s *discordgo.Session, guildID, m string, v interface{}) error 
 	}
 
 	return nil
+}
+
+// ParseMember is used to get a user from their id, username, mention etc.
+func ParseMember(s *discordgo.Session, guildID, user string) (*discordgo.Member, error) {
+	if UserMentionRegex.MatchString(user) {
+		user = NumberRegex.FindString(user)
+
+		return s.GuildMember(guildID, user)
+	} else if !NonNumberRegex.MatchString(user) {
+		return s.GuildMember(guildID, user)
+	} else {
+		guild, err := s.State.Guild(guildID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		discrim := discriminatorRegex.FindString(user)
+
+		if discrim != "" && strings.HasPrefix(user, discrim) {
+			for _, m := range guild.Members {
+				if m.User.Username+"#"+m.User.Discriminator == user {
+					return m, nil
+				}
+			}
+
+			user = strings.ToLower(user)
+
+			for _, m := range guild.Members {
+				if strings.ToLower(m.User.Username)+"#"+m.User.Discriminator == user {
+					return m, nil
+				}
+			}
+
+			return nil, errors.New("User not found")
+		}
+
+		for _, m := range guild.Members {
+			if m.User.Username == user {
+				return m, nil
+
+			}
+		}
+
+		user = strings.ToLower(user)
+
+		for _, m := range guild.Members {
+			if strings.ToLower(m.User.Username) == user {
+				return m, nil
+			}
+		}
+
+		// down to nicknames, at this point screw capitalization
+
+		for _, m := range guild.Members {
+			if m.Nick == "" {
+				continue
+			}
+			if strings.ToLower(m.Nick) == user {
+				return m, nil
+			}
+		}
+
+		return nil, errors.New("User not found")
+	}
+}
+
+// ParseChannel is used to get a user from their id, username, mention etc.
+func ParseChannel(s *discordgo.Session, guildID, channel string) (*discordgo.Channel, error) {
+	if ChannelMentionRegex.MatchString(channel) {
+		channelID := NumberRegex.FindString(channel)
+
+		return s.State.Channel(channelID)
+	} else if !NonNumberRegex.MatchString(channel) {
+		return s.State.Channel(channel)
+	} else {
+		guild, err := s.State.Guild(guildID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		channel = strings.ToLower(channel)
+
+		for _, c := range guild.Channels {
+			fmt.Println(c.Name)
+			if strings.ToLower(c.Name) == channel {
+				return c, nil
+			}
+		}
+
+		return nil, errors.New("Channel not found")
+	}
+}
+
+// RepairArgs is used to return an array of arguments back to its original state.
+func RepairArgs(args []string) string {
+	result := ""
+
+	for _, v := range args {
+		if strings.Contains(v, " ") {
+			result += fmt.Sprintf(` "%s"`, v)
+		} else {
+			result += " " + v
+		}
+	}
+
+	return result
+}
+
+// GetAuthor is used to return an embed author to depict a user
+func GetAuthor(u *discordgo.User) *discordgo.MessageEmbedAuthor {
+	return &discordgo.MessageEmbedAuthor{
+		Name:    fmt.Sprintf("%s#%s", u.Username, u.Discriminator),
+		IconURL: u.AvatarURL("128x128"),
+	}
 }

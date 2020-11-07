@@ -25,29 +25,26 @@ type CheckFunc func(
 type CleanArgCommand struct {
 	Name    string
 	Aliases []string
-	Plugin  Plugin
 	Checks  []CheckFunc
 	Exec    CleanArgCommandFunc
+	Plugin  *Plugin
 }
 
 // Command is a basic command
 type Command struct {
 	Name    string
 	Aliases []string
-	Plugin  Plugin
 	Checks  []CheckFunc
 	Exec    RawArgCommandFunc
+	Plugin  *Plugin
 }
 
 // Plugin is an interface used by the bot to register a plugin
-type Plugin interface {
-	Load(s *discordgo.Session) ([]interface{}, error)
-}
-
-// PluginWithChecks is a normal plugin with global checks
-type PluginWithChecks interface {
-	Plugin
-	Check(m *discordgo.Message) bool
+type Plugin struct {
+	Load     func(s *discordgo.Session) error
+	Check    func(m *discordgo.Message) bool
+	Commands []interface{}
+	Close    func()
 }
 
 // BasePlugin is a basic plugin that plugins probably want to embed
@@ -58,4 +55,9 @@ type BasePlugin struct {
 // Load is used to set the plugins config and session
 func (p *BasePlugin) Load(s *discordgo.Session) {
 	p.S = s
+}
+
+// Closeable is an interface for objects which have a Close() method
+type Closeable interface {
+	Close()
 }
