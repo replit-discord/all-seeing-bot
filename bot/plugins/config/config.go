@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/repl-it-discord/all-seeing-bot/bot/checks"
 	"github.com/repl-it-discord/all-seeing-bot/bot/plugins"
+	"github.com/repl-it-discord/all-seeing-bot/bot/plugins/help"
 	"github.com/repl-it-discord/all-seeing-bot/bot/plugins/logger"
 	"github.com/repl-it-discord/all-seeing-bot/bot/types"
 	"github.com/repl-it-discord/all-seeing-bot/db"
@@ -23,6 +24,7 @@ func (p *configPlugin) Check(m *discordgo.Message) bool {
 }
 
 var plugin = &types.Plugin{
+	Load: load,
 	Commands: []interface{}{
 		&types.Command{
 			Name: "prefix",
@@ -33,8 +35,8 @@ var plugin = &types.Plugin{
 			},
 		},
 		&types.Command{
-			Name:    "setloggerchannel",
-			Aliases: []string{"slc", "lc", "logchannel", "loggerchannel"},
+			Name:    "setlogchannel",
+			Aliases: []string{"slc", "lc", "logchannel"},
 			Checks: []types.CheckFunc{
 				checks.HasPermissions(&bot, "setloggerchannel", perms.Administrator, perms.ManageGuild),
 			},
@@ -46,7 +48,7 @@ var plugin = &types.Plugin{
 
 var loggerConfig = &logger.Config{
 	Name:  "Config",
-	Color: 0xffffff,
+	Color: 0xfefefe,
 }
 
 var bot *discordgo.Session
@@ -59,6 +61,7 @@ func load(s *discordgo.Session) error {
 
 func init() {
 	plugins.Register(plugin)
+	help.Register("config", plugin)
 }
 
 func prefix(m *discordgo.Message, args string) {

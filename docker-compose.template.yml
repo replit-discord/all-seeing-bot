@@ -5,6 +5,12 @@ services:
     build: .
     environment:
         BOT_TOKEN: weee # Put bot token here
+        # LOG_LEVEL is used to determine how logs should be handled.
+        # Values are:
+        #   0 - stderr only
+        #   1 - logs/<month>-<day>-<year>.log only
+        #   anything else: Both 0 and 1.  
+        LOG_LEVEL: 2
     volumes:
       - .:/opt/app
     depends_on:

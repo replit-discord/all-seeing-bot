@@ -13,7 +13,7 @@ var plugin = &types.Plugin{
 }
 
 var pluginConfig = &Config{
-	Color: 0xffffff,
+	Color: 0xfefefe,
 	Name:  "Logs",
 }
 

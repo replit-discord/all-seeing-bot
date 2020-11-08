@@ -1,0 +1,64 @@
+help:
+  description: The help plugin.
+  emoji: ℹ️
+  color: 0xfefefe
+  commands:
+    help:
+      params:
+        - name: "plugin"
+          optional: true
+          description: The plugin which you want to get help for.
+        - name: "command"
+          optional: true
+          description: The command which you want to get help for.
+      description: >+ 
+        Get help for a plugin or command.  You can pass a command, 
+        plugin name, or neither, but not both.
+config:
+  description: >+ 
+    Commands used to change the server configuration.  This includes the bot 
+    prefix and changing log destinations.
+  emoji: ⚙️
+  color: 0xc2c2c2 
+  commands:
+    prefix:
+      params:
+        - name: "preifx"
+          optional: false
+          description: The new prefix for the bot. This can be multiple words.
+      description: Set the server's prefix.
+    setlogchannel:
+      params:
+        - name: "channel"
+          optional: false
+          description: The channel that logs should go to.
+      description: Set the channel where logs for the server should go.
+moderation:
+  description: Moderation commands
+  emoji: 🔫
+  color: 0xde6210
+  commands:
+    mute:
+      params:
+        - name: "user"
+          optional: false
+          description: The user who should be muted.
+        - name: "duration"
+          optional: true
+          description: The duration that the user should be muted for, eg 15m5s3ms.
+        - name: "reason"
+          optional: true
+          description: The reason for the mute. This is for logs only.
+      description: >+
+        Mute a user. If they rejoin, and their mute has not expired,
+        the muted role will automatically get added again.
+      short: Mute a user.
+    unmute:
+      params:
+        - name: "user"
+          optional: false
+          description: The user who should be unmuted.
+        - name: "reason"
+          optional: true
+          description: The reason for unmuting the user. This is for logs only.
+      description: Unmute a user.

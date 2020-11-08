@@ -3,6 +3,7 @@ package util
 import (
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/repl-it-discord/all-seeing-bot/db"
@@ -94,6 +95,26 @@ func GetMutedRole(s *discordgo.Session, guildID string, config *db.GuildConfigTy
 	db.SetGuildConfig(guildID, config)
 
 	return r.ID, nil
+}
+
+// NumberMapping is a mapping of 0-10 to emojis of the same values
+var NumberMapping = map[int]string{
+	0:  "0️⃣",
+	1:  "1️⃣",
+	2:  "2️⃣",
+	3:  "3️⃣",
+	4:  "4️⃣",
+	5:  "5️⃣",
+	6:  "6️⃣",
+	7:  "7️⃣",
+	8:  "8️⃣",
+	9:  "9️⃣",
+	10: "🔟",
+}
+
+// GetNow returns the current time in the format discord uses for timestamps
+func GetNow() string {
+	return time.Now().Format(time.RFC3339)
 }
 
 // var discordPermMap = map[int]string{

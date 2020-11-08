@@ -9,7 +9,8 @@ import (
 )
 
 var plugin = &types.Plugin{
-	Load: load,
+	Load:    load,
+	Intents: discordgo.IntentsGuildMembers,
 }
 
 func load(s *discordgo.Session) error {

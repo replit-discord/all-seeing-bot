@@ -86,3 +86,10 @@ type GuildMute struct {
 	ExpiresAt time.Time `json:"expires_at"   gorm:"<-:create;"`
 	UserID    string    `json:"user_id"      gorm:"<-:create;not null"`
 }
+
+// HelpSession is a help session for the bot
+type HelpSession struct {
+	MessageID string `json:"message_id"`
+	Plugin    string `json:"plugin"`
+	Page      int    `json:"page"`
+}

@@ -23,7 +23,8 @@ func load(s *discordgo.Session) error {
 }
 
 var plugin = &types.Plugin{
-	Load: load,
+	Load:    load,
+	Intents: discordgo.IntentsDirectMessages | discordgo.IntentsGuildMessages,
 	Commands: []interface{}{
 		&types.Command{
 			Name:    "setmodmailchannel",
@@ -66,10 +67,6 @@ func handleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	go handleGuildMessage(s, m, m.ChannelID)
-
-	fmt.Println(c.Type, "type", c.OwnerID, c.Recipients)
-
-	fmt.Println(channelID)
 }
 
 func setModMailChannel(m *discordgo.Message, channel string) {
@@ -166,7 +163,6 @@ func handleDMMessage(s *discordgo.Session, m *discordgo.MessageCreate, userID st
 		}
 
 		if err != nil {
-			fmt.Println(err)
 			s.ChannelMessageSend(m.ChannelID, "An unknown error occurred.")
 		}
 
@@ -289,7 +285,6 @@ func handleGuildMessage(s *discordgo.Session, m *discordgo.MessageCreate, userID
 	}
 
 	if err != nil {
-		fmt.Println(err)
 		s.ChannelMessageSend(m.ChannelID, "An unknown error occurred.")
 	}
 

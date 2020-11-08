@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export GOTRACEBACK=all
 GOTSIG=no
 handle_kill() {
   GOTSIG=yes

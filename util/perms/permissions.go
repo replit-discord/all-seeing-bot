@@ -52,6 +52,7 @@ var permissions = []string{
 	"unmute",
 	"prefix",
 	"setloggerchannel",
+	"help",
 }
 
 // Permissions is a type used to store permission data in a byte array
@@ -102,8 +103,11 @@ func HasAnyPermissionsIn(s *discordgo.Session, m *discordgo.Message, permissionN
 
 // HasPermission gets whether a member has permission to perform an action or not.
 func HasPermission(s *discordgo.Session, m *discordgo.Message, perm string, fallback bool) (bool, error) {
-	var userRoles []*discordgo.Role
 
+	if m.GuildID == "" {
+		return fallback, nil
+	}
+	var userRoles []*discordgo.Role
 	perms, err := db.GetGuildPermissions(m.GuildID)
 
 	if err != nil {

@@ -2,7 +2,6 @@ package util
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -227,7 +226,6 @@ func ParseChannel(s *discordgo.Session, guildID, channel string) (*discordgo.Cha
 		channel = strings.ToLower(channel)
 
 		for _, c := range guild.Channels {
-			fmt.Println(c.Name)
 			if strings.ToLower(c.Name) == channel {
 				return c, nil
 			}
@@ -243,7 +241,7 @@ func RepairArgs(args []string) string {
 
 	for _, v := range args {
 		if strings.Contains(v, " ") {
-			result += fmt.Sprintf(` "%s"`, v)
+			result += ` "` + v + `"`
 		} else {
 			result += " " + v
 		}
@@ -255,7 +253,17 @@ func RepairArgs(args []string) string {
 // GetAuthor is used to return an embed author to depict a user
 func GetAuthor(u *discordgo.User) *discordgo.MessageEmbedAuthor {
 	return &discordgo.MessageEmbedAuthor{
-		Name:    fmt.Sprintf("%s#%s", u.Username, u.Discriminator),
+		Name:    u.Username + "#" + u.Discriminator,
 		IconURL: u.AvatarURL("128x128"),
 	}
+}
+
+// Bold returns the bold version of a string
+func Bold(in string) string {
+	return "**" + in + "**"
+}
+
+// CapitalizeFirst capitalizes the first letter of a string
+func CapitalizeFirst(in string) string {
+	return strings.ToUpper(string(in[0])) + in[1:]
 }

@@ -2,7 +2,9 @@ package bot
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -16,7 +18,9 @@ import (
 
 	// Core plugins here (used by other plugins so it should ALWAYS be loaded)
 	_ "github.com/repl-it-discord/all-seeing-bot/bot/plugins/background"
-	_ "github.com/repl-it-discord/all-seeing-bot/bot/plugins/handlers"
+	_ "github.com/repl-it-discord/all-seeing-bot/bot/plugins/help"
+
+	// _ "github.com/repl-it-discord/all-seeing-bot/bot/plugins/handlers"
 	_ "github.com/repl-it-discord/all-seeing-bot/bot/plugins/logger"
 
 	// Plugin registering
@@ -49,8 +53,14 @@ func Run() {
 
 	bot, err = discordgo.New("Bot " + os.Getenv("BOT_TOKEN"))
 
-	bot.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAllWithoutPrivileged | discordgo.IntentsGuildMembers)
+	bot.Identify.Intents = discordgo.MakeIntent(
+		plugins.GetIntents() |
+			discordgo.IntentsGuildMessages |
+			discordgo.IntentsDirectMessages |
+			discordgo.IntentsGuilds,
+	)
 
+	// bot.Debug = true
 	// register events
 	bot.AddHandler(ready)
 	bot.AddHandler(handleChannelCreate)
@@ -118,7 +128,8 @@ func handleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 func handleCommand(s *discordgo.Session, m *discordgo.MessageCreate, config *db.GuildConfigType) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Printf("Recovering from error: %s \n", r)
+			log.Printf("Recovering from error: %s \n", r)
+			log.Println(string(debug.Stack()))
 		}
 	}()
 
@@ -187,7 +198,6 @@ func handleCommand(s *discordgo.Session, m *discordgo.MessageCreate, config *db.
 	}
 
 	for _, check := range cmd.Checks {
-		fmt.Println(check)
 		if !check(m.Message) {
 			noPerms()
 			return

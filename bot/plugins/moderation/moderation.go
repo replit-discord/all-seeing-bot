@@ -9,16 +9,13 @@ import (
 	"github.com/repl-it-discord/all-seeing-bot/bot/checks"
 	"github.com/repl-it-discord/all-seeing-bot/bot/plugins"
 	"github.com/repl-it-discord/all-seeing-bot/bot/plugins/background"
+	"github.com/repl-it-discord/all-seeing-bot/bot/plugins/help"
 	"github.com/repl-it-discord/all-seeing-bot/bot/plugins/logger"
 	"github.com/repl-it-discord/all-seeing-bot/bot/types"
 	"github.com/repl-it-discord/all-seeing-bot/db"
 	"github.com/repl-it-discord/all-seeing-bot/util"
 	"github.com/repl-it-discord/all-seeing-bot/util/perms"
 )
-
-type modPlugin struct {
-	*types.BasePlugin
-}
 
 var loggerConfig = &logger.Config{
 	Name:  "Moderation",
@@ -28,14 +25,14 @@ var loggerConfig = &logger.Config{
 var zeroTime = time.Time{}
 
 var plugin = &types.Plugin{
-	Load: load,
+	Load:    load,
+	Intents: discordgo.IntentsGuildMembers,
 	Commands: []interface{}{
 		&types.CleanArgCommand{
 			Name:    "mute",
 			Aliases: []string{"silence"},
 
 			Checks: []types.CheckFunc{
-				checks.IsGuild,
 				checks.HasPermissions(&bot, "mute", perms.Administrator, perms.ManageRoles, perms.BanMembers),
 			},
 
@@ -45,7 +42,6 @@ var plugin = &types.Plugin{
 			Name:    "unmute",
 			Aliases: []string{"unsilence"},
 			Checks: []types.CheckFunc{
-				checks.IsGuild,
 				checks.HasPermissions(&bot, "unmute", perms.Administrator, perms.ManageRoles, perms.BanMembers),
 			},
 
@@ -83,8 +79,6 @@ func load(s *discordgo.Session) error {
 }
 
 func handleJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
-	fmt.Println("wtf")
-
 	mute := &db.GuildMute{
 		UserID:  m.User.ID,
 		GuildID: m.GuildID,
@@ -94,7 +88,6 @@ func handleJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 
 	// User is fine, they're not muted
 	if err != nil {
-		fmt.Println("oof", err)
 		return
 	}
 
@@ -110,6 +103,7 @@ func handleJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 
 func init() {
 	plugins.Register(plugin)
+	help.Register("moderation", plugin)
 }
 
 func mute(

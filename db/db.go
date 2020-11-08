@@ -18,6 +18,13 @@ func chk(err error) {
 	}
 }
 
+const (
+	configCacheExpiration     = time.Hour
+	permissionCacheExpiration = time.Hour
+	modmailThreadExpiration   = time.Hour
+	helpSessionExpiration     = time.Minute * 5
+)
+
 var db *gorm.DB
 var store *redis.Client
 
@@ -111,7 +118,7 @@ func GetGuildConfig(guildID string) (*GuildConfigType, error) {
 
 	if err == nil {
 		// Reset the expiration
-		defer cache(guildID+"-config", configRow, time.Hour)
+		defer cache(guildID+"-config", configRow, configCacheExpiration)
 
 		return &configRow.Config, err
 	}
@@ -133,7 +140,7 @@ func GetGuildConfig(guildID string) (*GuildConfigType, error) {
 		return GetGuildConfig(guildID)
 	}
 
-	err = cache(guildID+"-config", configRow, time.Hour)
+	err = cache(guildID+"-config", configRow, configCacheExpiration)
 
 	if err != nil {
 		return nil, err
@@ -163,7 +170,7 @@ func SetGuildConfig(guildID string, config *GuildConfigType) error {
 		return res.Error
 	}
 
-	return cache(guildID+"-config", configRow, time.Hour)
+	return cache(guildID+"-config", configRow, configCacheExpiration)
 }
 
 // GetGuildPermissions is used to get permissions for a guild
@@ -180,14 +187,14 @@ func GetGuildPermissions(guildID string) ([]*GuildPermission, error) {
 	err = fetch(key, rows)
 
 	if err == nil {
-		defer cache(key, rows, time.Hour)
+		defer cache(key, rows, permissionCacheExpiration)
 
 		return rows, nil
 	}
 
 	db.Where(&GuildPermission{GuildID: guildID}).Find(&rows)
 
-	err = cache(key, rows, time.Hour)
+	err = cache(key, rows, permissionCacheExpiration)
 
 	return rows, err
 }
@@ -253,7 +260,7 @@ func GetModMailThreadByUserID(userID string) (*ModMailThread, error) {
 		return nil, errors.New("thread not found")
 	}
 
-	return thread, cache(key, thread, time.Hour)
+	return thread, cache(key, thread, modmailThreadExpiration)
 }
 
 // GetModMailThreadByChannelID is used to try and find a modmail thread by the channel id that belong to the thread
@@ -275,7 +282,7 @@ func GetModMailThreadByChannelID(channelID string) (*ModMailThread, error) {
 		return nil, tx.Error
 	}
 
-	return thread, cache(key, thread, time.Hour)
+	return thread, cache(key, thread, modmailThreadExpiration)
 }
 
 // DeleteModMailThread is used to delete a modmail thread
@@ -330,4 +337,29 @@ func GetMutes() ([]*GuildMute, error) {
 // DeleteMute is used to delete a guildMute record
 func DeleteMute(m *GuildMute) error {
 	return db.Where(m).Delete(m).Error
+}
+
+// CreateHelpSession is used to register a help "session" for help commands.
+func CreateHelpSession(userID string, messageID string) error {
+	session := &HelpSession{
+		MessageID: messageID,
+	}
+	return cache(userID, session, helpSessionExpiration)
+}
+
+// SetHelpSession is used to set a help "session" for help commands.
+func SetHelpSession(userID string, session *HelpSession) error {
+	return cache(userID, session, helpSessionExpiration)
+}
+
+// GetHelpSession is used to register a help "session" for help commands.
+func GetHelpSession(userID string) (*HelpSession, error) {
+	session := &HelpSession{}
+	err := fetch(userID, session)
+	if err != nil {
+		return nil, err
+	}
+	// Reset the expiration
+	defer cache(userID, session, helpSessionExpiration)
+	return session, nil
 }

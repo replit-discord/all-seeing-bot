@@ -1,8 +1,6 @@
 package checks
 
 import (
-	"fmt"
-
 	"github.com/bwmarrin/discordgo"
 	"github.com/repl-it-discord/all-seeing-bot/bot/types"
 	"github.com/repl-it-discord/all-seeing-bot/util/perms"
@@ -16,10 +14,18 @@ func IsGuild(m *discordgo.Message) bool {
 // HasPermissions is a basic permission check for discord and asb perm checks
 func HasPermissions(s **discordgo.Session, perm string, discordPerms ...perms.DiscordPermission) types.CheckFunc {
 	return func(m *discordgo.Message) bool {
-		fmt.Println("wtf", s, m, discordPerms)
 		fallback := perms.HasAnyPermissionsIn(*s, m, discordPerms...)
-		fmt.Println("hey")
 		hasPerms, _ := perms.HasPermission(*s, m, perm, fallback)
+
 		return hasPerms
+	}
+}
+
+// HasPermission checks to see if a user has an asb perm
+func HasPermission(s **discordgo.Session, perm string, fallback bool) types.CheckFunc {
+	return func(m *discordgo.Message) bool {
+		hasPerm, _ := perms.HasPermission(*s, m, perm, fallback)
+
+		return hasPerm
 	}
 }

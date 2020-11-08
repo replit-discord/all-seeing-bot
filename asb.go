@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -14,35 +16,80 @@ import (
 
 const lockFilePath = "/tmp/asb.lock"
 
+func close() {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Print("Unable to close cleanly", r)
+			log.Print(string(debug.Stack()))
+		}
+	}()
+
+	db.Close()
+	bot.Kill()
+}
+
+type logger struct {
+}
+
+var loguout io.Writer
+
+func ensureLogFile() {
+	if os.Getenv("LOG_LEVEL") == "1" {
+		log.SetOutput(os.Stderr)
+		return
+	}
+
+	setLogs := func() {
+		f, err := os.OpenFile(
+			fmt.Sprintf("logs/%s.log", time.Now().Local().Format("01-02-2006")),
+			os.O_WRONLY|os.O_CREATE|os.O_APPEND,
+			0644,
+		)
+
+		if err != nil {
+			panic(err)
+		}
+
+		if os.Getenv("LOG_LEVEL") == "1" {
+			log.SetOutput(f)
+		} else {
+			log.SetOutput(io.MultiWriter(f, os.Stderr))
+		}
+	}
+
+	setLogs()
+
+	go func() {
+		for {
+			y, m, d := time.Now().Local().Date()
+			nextDay := time.Date(y, m, d+1, 0, 0, 0, 0, time.Local)
+
+			time.Sleep(time.Until(nextDay))
+			setLogs()
+		}
+	}()
+
+}
+
 func main() {
 	defer func() {
-
-		os.Remove(lockFilePath)
 		if r := recover(); r != nil {
-			log.Print("Panic occurred:", r)
+			close()
+			log.Print("Panic:", r)
+			log.Print(string(debug.Stack()))
 		}
+		os.Remove(lockFilePath)
 	}()
 	log.SetFlags(log.Ldate | log.Llongfile | log.Ltime)
 
-	now := time.Now().Local().Format("02-01-2006")
+	ensureLogFile()
 
-	f, err := os.OpenFile(
-		fmt.Sprintf("logs/%s.log", now),
-		os.O_WRONLY|os.O_CREATE|os.O_APPEND,
-		0644,
-	)
-
-	if err != nil {
-		panic(err)
-	}
-
-	log.SetOutput(f)
 	db.Connect()
 
 	fmt.Println("Connected to DB")
 
-	go bot.Run()
-	f, _ = os.Create(lockFilePath)
+	bot.Run()
+	f, _ := os.Create(lockFilePath)
 
 	defer f.Close()
 
@@ -51,6 +98,5 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	<-sigs
-	db.Close()
-	bot.Kill()
+	close()
 }
