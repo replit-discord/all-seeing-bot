@@ -11,8 +11,9 @@ from pygments import highlight, lexers, formatters
 
 
 dev_ids = [
-    487258918465306634,
-    527937324865290260
+    487258918465306634,  # AA
+    527937324865290260,  # AA alt
+    422837173671428097  # Leon
 ]
 
 special_commands = [
@@ -25,13 +26,11 @@ special_commands = [
 
 
 def update(old, new, output=True):
-
     for k, v in new.items():
         if isinstance(v, abc.Mapping):
             old[k] = update(old.get(k, {}), v, False)
         else:
             old[k] = v
-
     return old
 
 
@@ -196,6 +195,7 @@ async def mute(user: discord.Member, duration: timedelta):
 
 
 async def error_log(tb, error, bot):
+    print(tb)
     error_type = str(error[0])[8:][:-2]
     if 'forbidden' not in error_type.lower():
         embed = discord.Embed(
@@ -206,8 +206,8 @@ async def error_log(tb, error, bot):
 
         embed.timestamp = datetime.now()
         guild = bot.get_guild(585606083897458691)
-        channel = guild.get_channel(626223737376604191)
-        await channel.send(embed=embed)
+        channel = bot.get_channel(626223737376604191)
+        # await channel.send(embed=embed)
 
 
 class PermCache:

@@ -1,6 +1,6 @@
 import discord
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from discord.ext import commands
 from utils import get_muted_role, perm_cache
 from tools.read_write import read, write
@@ -14,7 +14,7 @@ def get_embed(user: discord.Member, nick: str) -> discord.Embed:
         description=f'<@{user.id}> would like to have their nickname set to `{nick}`'
     )
 
-    emb.timestamp = datetime.now()
+    emb.timestamp = datetime.utcnow()
 
     return emb
 
@@ -35,55 +35,69 @@ class Nicks(commands.Cog, name='nicks'):
         return True
 
     @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
         if not payload.guild_id:
             return
-
         data = await read('nick_stuff')
-
         guild: discord.Guild = self.bot.get_guild(payload.guild_id)
-
         if str(guild.id) not in data:
             return
-
         guild_data = data[str(guild.id)]
-
+        guild: discord.Guild = self.bot.get_guild(payload.guild_id)
         if 'users' not in guild_data:
             return
 
         if not 'mod_channel' in guild_data or guild_data['mod_channel'] != payload.channel_id:
             return
 
-        member: discord.Member = guild.get_member(payload.user_id)
-
-        channel: discord.TextChannel = guild.get_channel(payload.channel_id)
-        user_data = None
-
-        users = guild_data['users']
-
-        for u in users:
-            user = users[u]
-
-            if user['message'] == payload.message_id:
-                user_data = users[u]
+        for user in guild_data['users']:
+            if guild_data['users'][user]['message'] == payload.message_id:
+                member = await self.bot.fetch_user(user)
+                await member.send('Your nickname request has expired, please use requestnick again.')
                 break
 
-        if not user_data:
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if not payload.guild_id:
+            return
+        data = await read('nick_stuff')
+        guild: discord.Guild = self.bot.get_guild(payload.guild_id)
+        if str(guild.id) not in data:
+            return
+        guild_data = data[str(guild.id)]
+        if payload.user_id == self.bot.user.id:
+            return
+        if 'users' not in guild_data:
+            return
+        if not 'mod_channel' in guild_data or guild_data['mod_channel'] != payload.channel_id:
             return
 
-        emoji = str(payload.emoji)
+        member = None
+        for user in guild_data['users']:
+            if guild_data['users'][user]['message'] == payload.message_id:
+                member = await guild.fetch_member(user)
+                break
+        if not member:
+            return
+        nickname = guild_data['users'][str(member.id)]['nick']
+        channel = guild.get_channel(payload.channel_id)
 
+        emoji = str(payload.emoji)
         if not emoji == '✅' and not emoji == '❌':
             return
 
-        user: discord.Member = guild.get_member(user_data['user'])
-
+        message = await channel.fetch_message(payload.message_id)
         if emoji == '✅':
-            await user.edit(nick=user_data['nick'])
+            await member.edit(nick=nickname)
+            await member.send('Your nickname request has been approved.')
+        else:
+            await member.send('Your nickname request has been denied.')
 
-        del fd[str(guild.id)]['users'][str(user.id)]
+        await message.delete()
 
-        await write('nick_stuff', fd)
+        del data[str(guild.id)]['users'][str(member.id)]
+
+        await write('nick_stuff', data)
 
     @commands.command(name='modnickchannel', aliases=['mnc'])
     async def set_channel(self, ctx: commands.Context, channel: discord.TextChannel):
@@ -122,34 +136,30 @@ class Nicks(commands.Cog, name='nicks'):
                 if str(ctx.author.id) in users:
                     user_data = users[str(ctx.author.id)]
 
-                    message = await channel.fetch_message(user_data['message'])
-
         if not channel:
             await ctx.author.send('nick requests have not been setup yet')
 
-        if message:
-            await message.edit(embed=get_embed(ctx.author, nick))
-        else:
-            message = await channel.send(embed=get_embed(ctx.author, nick))
+        message = await channel.send(embed=get_embed(ctx.author, nick,), delete_after=10)
 
-            await message.add_reaction('✅')
-            await message.add_reaction('❌')
+        await message.add_reaction('✅')
+        await message.add_reaction('❌')
 
         data = {
             str(ctx.guild.id): {
                 'users': {
                     str(ctx.author.id): {
                         'nick': nick,
-                        'user': ctx.author.id,
-                        'message': message.id
+                        'user_id': ctx.author.id,
+                        'message': message.id,
                     }
                 }
             }
         }
 
         fd = update(fd, data)
+        await write('nick_stuff', fd)
 
-        await ctx.author.send('nick requested')
+        await ctx.author.send('Nick requested')
 
 
 def setup(bot):

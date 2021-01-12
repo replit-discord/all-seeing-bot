@@ -86,9 +86,11 @@ def getinfo():
 
         for cat in guild.by_category():
             if cat[0] == None:
-                channels.append(('No Category', [(c.name, c.id) for c in cat[1]]))
+                channels.append(
+                    ('No Category', [(c.name, c.id) for c in cat[1]]))
             else:
-                channels.append((cat[0].name, [(c.name, c.id) for c in cat[1]]))
+                channels.append((cat[0].name, [(c.name, c.id)
+                                               for c in cat[1]]))
 
         for r in guild.roles:
 
@@ -115,7 +117,6 @@ def reload():
     bot.loop.create_task(read('perms', read_from_cache=False))
 
     return 'done'
-
 
 
 @app.route('/getperms')

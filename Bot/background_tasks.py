@@ -2,6 +2,7 @@ import sys
 import asyncio
 import discord
 import datetime
+import time
 import traceback
 from tools.read_write import read, write
 from utils import get_muted_role, error_log
@@ -94,7 +95,7 @@ async def check_mute():
 
 async def spam_chart_daemon(bot):
     while True:
-        print("Clearing spamchart")
+        #print("Clearing spamchart")
         try:
             await check_expire()
         except Exception as e:
@@ -102,10 +103,11 @@ async def spam_chart_daemon(bot):
             out = sys.exc_info()
 
             print(traceback_message)
-            print('\n\\nn' + '>' * 20 +'\nTRACEBACK_MSG\n\n\n',traceback_message, '\n<' * 20, '\n\n\n')
-            print('\n\\nn' + '>' * 20 +'\nOUT\n\n\n', out, '\n<' * 20, '\n\n\n')
-            print('\n\\nn' + '>' * 20 +'\nE\n\n\n', e, '\n<' * 20, '\n\n\n')
-
+            print('\n\\nn' + '>' * 20 + '\nTRACEBACK_MSG\n\n\n',
+                  traceback_message, '\n<' * 20, '\n\n\n')
+            print('\n\\nn' + '>' * 20 + '\nOUT\n\n\n',
+                  out, '\n<' * 20, '\n\n\n')
+            print('\n\\nn' + '>' * 20 + '\nE\n\n\n', e, '\n<' * 20, '\n\n\n')
 
         await asyncio.sleep(1)
 
@@ -115,10 +117,10 @@ async def bg_tasks(client):
     bot = client
     tasks = [
         check_ban,
-        check_mute
+        check_mute,
     ]
     while True:
-        print('Running tasks')
+        # print('Running tasks')
         for task in tasks:
             try:
                 await task()

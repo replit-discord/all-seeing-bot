@@ -1,0 +1,6 @@
+cryptography
+flask
+cryptography
+discord.py
+pygments
+emoji

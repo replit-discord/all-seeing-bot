@@ -6,3 +6,4 @@ Bot/wtf2.json
 Filter/libfilter.h
 Filter/libfilter.so
 .venv
+db*

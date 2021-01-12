@@ -2,11 +2,13 @@ import os
 import sys
 import discord
 import asyncio
-import webserver
+#import webserver
 from discord.ext import commands
 from background_tasks import bg_tasks, spam_chart_daemon
 from utils import check_command, is_dev
 import importlib
+
+intents = discord.Intents.all()
 
 
 async def determine_prefix(bot, message):
@@ -16,7 +18,8 @@ async def determine_prefix(bot, message):
 
 bot = commands.Bot(
     command_prefix=determine_prefix,
-    case_insensitive=True
+    case_insensitive=True,
+    intents=intents
 )
 
 
@@ -50,8 +53,10 @@ extensions = [
 
 converter = commands.RoleConverter()
 
+
 def testFunc(ctx: commands.Context) -> bool:
     return ctx.guild.id == 437048931827056642
+
 
 @bot.command(name="helper")
 @commands.check(testFunc)
@@ -61,14 +66,13 @@ async def toggle_helper_role(ctx: commands.Context, name: str):
     except commands.errors.BadArgument:
         await ctx.send("nope nope doesnt exist nice try")
         return
-    
+
     if role in ctx.author.roles:
         await ctx.author.remove_roles(role)
     else:
         await ctx.author.add_roles(role)
-    
+
     await ctx.send('done')
-        
 
 
 if __name__ == '__main__':
@@ -95,13 +99,13 @@ async def on_ready():
 @bot.event
 async def on_command_error(ctx, error):
     if type(error) == commands.errors.CheckFailure:
-        await ctx.message.delete()
+        # await ctx.message.delete()
         msg = await ctx.send(f"You cant use `{ctx.prefix}{ctx.command}` here...")
         await asyncio.sleep(3)
         await msg.delete()
     else:
         raise error
 
-webserver.keep_alive(bot)
+# webserver.keep_alive(bot)
 token = os.environ.get("DISCORD_BOT_SECRET")
 bot.run(token)

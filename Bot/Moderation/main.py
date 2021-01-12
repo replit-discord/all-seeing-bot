@@ -73,7 +73,7 @@ class Checks(commands.Cog, name='moderation checks'):
         title: str = '**Moderation**',
         color=0xff0000,
         **kwargs
-    ):  
+    ):
         print("yo")
         await log(message, desc, title, color, **kwargs)
 
