@@ -139,7 +139,7 @@ class Nicks(commands.Cog, name='nicks'):
         if not channel:
             await ctx.author.send('nick requests have not been setup yet')
 
-        message = await channel.send(embed=get_embed(ctx.author, nick,), delete_after=10)
+        message = await channel.send(embed=get_embed(ctx.author, nick,), delete_after=86400)
 
         await message.add_reaction('✅')
         await message.add_reaction('❌')
