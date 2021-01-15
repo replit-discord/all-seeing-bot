@@ -5,7 +5,7 @@ Every message counts as one offense, unless it has one of five types of content:
 
 1) Banned words (100% customizable, no presets)
 2) Discord invite link (Option for disabling it following)
-3) Hs more emojis than the server limit (Default is 30)
+3) Has more emojis than the server limit (Default is 30)
 4) Has more mentions than allowed (Default is 5))
 5) Is a spam message (Any phrase repeats x amount of times, a default of 10)
 
