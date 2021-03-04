@@ -1,12 +1,12 @@
 # All Seeing Bot
-This is a bot created by AllAwesome497 and the `repl.it discord`,which was featured in the repl.it App of the Week event.
+This is a bot created by AllAwesome497 and the `repl.it discord`, which was featured in the repl.it App of the Week event.
 
 Every message counts as one offense, unless it has one of five types of content:
 
 1) Banned words (100% customizable, no presets)
 2) Discord invite link (Option for disabling it following)
 3) Hs more emojis than the server limit (Default is 30)
-4) Has more mentions than allowed (Default is 5))
+4) Has more mentions than allowed (Default is 5)
 5) Is a spam message (Any phrase repeats x amount of times, a default of 10)
 
 In the case it is one of those types of content, then it counts as an additional offense, that lasts for twice the duration.
@@ -34,7 +34,7 @@ Action logs
 
 Banned words and reactions.
 
-Detects bypassing methods (for word bans). Works for almost every bypassing method knwon to mankind.
+Detects bypassing methods (for word bans). Works for almost every bypassing method known to mankind.
 
 Highly customizable: Almost every setting is customizable.
 
