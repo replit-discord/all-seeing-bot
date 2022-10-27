@@ -80,12 +80,12 @@ async def check_expire():
         for d in del_list:
             data.remove(d)
             author = d[0].author
-            muted = await get_muted_role(d[0].guild)
-            if muted in author.roles:
-                try:
-                    await d[0].delete()
-                except:
-                    pass
+            # muted = await get_muted_role(d[0].guild)
+            #if muted in author.roles:
+            #    try:
+            #        await d[0].delete()
+            #    except:
+            #        pass
         new_data[g] = data
     spam_chart.cache('spam_chart', sc)
 

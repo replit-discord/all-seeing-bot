@@ -1,4 +1,5 @@
 import os
+import json
 import discord
 from datetime import datetime
 from tools.read_write import read, write
@@ -74,7 +75,7 @@ class Checks(commands.Cog, name='moderation checks'):
         color=0xff0000,
         **kwargs
     ):  
-        print("yo")
+        #print("yo")
         await log(message, desc, title, color, **kwargs)
 
     async def check_enabled(self, guild, name, channel=None, author=None):
@@ -90,7 +91,7 @@ class Checks(commands.Cog, name='moderation checks'):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author == self.bot.user:
+        if message.author.bot:
             return
         if str(message.channel.type) != 'text':
             return
@@ -142,6 +143,13 @@ class Checks(commands.Cog, name='moderation checks'):
 
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload):
+        if 'webhook_id' in payload.data:
+            return
+        if 'author' not in payload.data:
+        #    print(json.dumps(payload.data, indent=4))
+            return
+        print('author in payload.data')
+        # print(json.dumps(payload.data, indent=4))
         if 'guild_id' not in payload.data:
             return
         guild = self.bot.get_guild(int(payload.data['guild_id']))
@@ -157,11 +165,13 @@ class Checks(commands.Cog, name='moderation checks'):
             for check in checks:
                 failed = False
 
+                #print(payload.data, 'payload.data')
+
                 enabled = await self.check_enabled(
                     guild,
                     check.name,
                     channel,
-                    await guild.fetch_member(payload.data['author'])
+                    await guild.fetch_member(payload.data['author']['id'])
                 )
                 if enabled:
 
@@ -250,3 +260,4 @@ class Checks(commands.Cog, name='moderation checks'):
 def setup(bot):
 
     bot.add_cog(Checks(bot))
+

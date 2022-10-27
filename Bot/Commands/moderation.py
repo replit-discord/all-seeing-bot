@@ -266,40 +266,42 @@ class Moderation(commands.Cog, name='moderation'):
             fd[guild.id] = []
             await write('banEmojis', fd, False)
         ban_emojis = fd[guild.id]
-        embed = discord.Embed(
-            title='**Banned Content:**',
-            color=0xeb5e34
-        )
         if ban_words is not []:
-            ban_word_content = '```css\n'
-            for a in range(len(ban_words)):
-                word = ban_words[a]
-                paranoia = word['paranoia']
+            await ctx.author.send('banned words (message ends with | in case of trailing newlines)')
+            for word in ban_words:
+               await ctx.author.send(f'Paranoia: {word["paranoia"]}; Word: {word["word"]}|')
+            #ban_word_content = '```css\n'
+            #for a in range(len(ban_words)):
+            #    word = ban_words[a]
+            #    paranoia = word['paranoia']
 
-                ban_word_content += f'{a+1}: (Paranoia: {paranoia}) {word["word"]}\n'
-            ban_word_content += '```'
-        else:
-            ban_word_content = 'None'
+            #    ban_word_content += f'{a+1}: (Paranoia: {paranoia}) {word["word"]}\n'
+            #ban_word_content += '```'
+        #else:
+         #   ban_word_content = 'None'
         if ban_emojis is not []:
-            ban_emoji_content = '```css\n'
-            for a in range(len(ban_emojis)):
-                ban_emoji_content += f'{a+1}: {ban_emojis[a]}\n'
+            await ctx.author.send('Banned reactions (if the feature still works)') 
+	    #ban_emoji_content = '```css\n'
+            for emoji in ban_emojis:
+                await ctx.author.send(f'Reaction: {emoji}')
+            #for a in range(len(ban_emojis)):
+            #    ban_emoji_content += f'{a+1}: {ban_emojis[a]}\n'
 
-            ban_emoji_content += '```'
-        else:
-            ban_emoji_content = 'None'
-        embed.add_field(
-            name='**Banned Words:**',
-            value=ban_word_content,
-            inline=True
-        )
-        embed.add_field(
-            name='**Banned Reactions:**',
-            value=ban_emoji_content,
-            inline=True
-        )
+            #ban_emoji_content += '```'
+        #else:
+           # ban_emoji_content = 'None'
+        #embed.add_field(
+        #    name='**Banned Words:**',
+        #    value=ban_word_content,
+        #    inline=True
+        #)
+        #embed.add_field(
+        #    name='**Banned Reactions:**',
+        #    value=ban_emoji_content,
+        #    inline=True
+        #)
         # print(ban_emoji_content)
-        await ctx.send(embed=embed)
+        #await ctx.send(embed=embed)
 
     @commands.command(name='whois')
     async def whois(self, ctx: commands.Context, user: discord.Member):
@@ -377,13 +379,13 @@ class Moderation(commands.Cog, name='moderation'):
                 duration = find_date(time)
                 end_date = duration + datetime.now()
 
-                end_date.strftime('%Y-%m-%w-%W %H:%M:%S')
+                
                 ban_list = await read('banList')
                 if guild.id in ban_list:
                     guild_list = ban_list[guild.id]
                 else:
                     guild_list = {}
-                guild_list[user.id] = end_date
+                guild_list[user.id] = end_date.strftime('%Y-%m-%w-%W %H:%M:%S')
                 ban_list[guild.id] = guild_list
                 await write('banList', ban_list)
                 fields.append(
@@ -954,3 +956,4 @@ class Moderation(commands.Cog, name='moderation'):
 
 def setup(bot):
     bot.add_cog(Moderation(bot))
+

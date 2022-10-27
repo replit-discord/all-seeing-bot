@@ -8,6 +8,9 @@ from background_tasks import bg_tasks, spam_chart_daemon
 from utils import check_command, is_dev
 import importlib
 
+intents = discord.Intents.all()
+intents.presences = False
+
 
 async def determine_prefix(bot, message):
     if message.guild and message.guild.id == 437048931827056642:
@@ -16,7 +19,8 @@ async def determine_prefix(bot, message):
 
 bot = commands.Bot(
     command_prefix=determine_prefix,
-    case_insensitive=True
+    case_insensitive=True,
+    intents=intents,
 )
 
 

@@ -31,18 +31,23 @@ async def log(text, guild, title='Automatic'):
 
 async def check_ban():
     global bot
+
     banList = await read('banList')
     delList = []
     for guild_list in banList:
         for userId in banList[guild_list]:
             date = banList[guild_list][userId]
+            print(banList[guild_list])
             date = datetime.datetime.strptime(date, "%Y-%m-%w-%W %H:%M:%S")
             if datetime.datetime.now() >= date:
                 delList.append([guild_list, userId])
 
     for a in delList:
         guild = bot.get_guild(a[0])
+        if not guild:
+            continue
         banEntry = await guild.bans()
+        user = None
         for each in banEntry:
             if each.user.id == a[1]:
                 user = each.user
@@ -75,6 +80,8 @@ async def check_mute():
 
     for a in del_list:
         guild = bot.get_guild(int(a[0]))
+        if not guild:
+            continue
         member_id_list = [member.id for member in guild.members]
         if int(a[1]) not in member_id_list:
             del mute_list[a[0]][a[1]]
@@ -129,3 +136,4 @@ async def bg_tasks(client):
                 await error_log(traceback_message, out, bot)
                 print(e)
         await asyncio.sleep(1)
+

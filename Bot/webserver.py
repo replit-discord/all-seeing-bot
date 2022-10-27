@@ -49,13 +49,16 @@ def get_commands():
     ) if cog.qualified_name not in blacklisted_cogs]
     data = {}
     ctx_data = request.form
-    info = {}
-    if 'channel_id' in request.form:
-        info['channel_id'] = request.form['channel_id']
-    if 'role_id' in request.form:
+    info = {'guild_id': request.form['guild_id']}
+    if 'channel' in request.form:
+        info['channel_id'] = request.form['channel']
+    if 'role' in request.form:
         guild = bot.get_guild(int(request.form['guild_id']))
+        print(guild.get_role(int(request.form['role'])))
+        info['role'] = guild.get_role(int(request.form['role']))
+    open('bruh.txt', 'w').write(str(info) + '\n\n\n' + str(request.form))
+    print(info)
 
-        info['role'] = guild.get_role(int(request.form['role_id']))
     def_data = {}
 
     for cog in cogs:
@@ -226,3 +229,4 @@ def keep_alive(d_bot):
 
     t = Thread(target=run)
     t.start()
+

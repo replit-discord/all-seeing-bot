@@ -60,7 +60,7 @@ class LazyCtx:
         self.command = command
         self.guild = LazyGuild(info['guild_id'])
         self.author = LazyAuthor()
-
+        # open('bruh.txt', 'w').write(open('bruh.txt', 'r').read() + '\n\n\n' + str(info))
         if 'role' in info:
             self.author.roles = [info['role']]
             self.author.guild_permissions = info['role'].permissions
@@ -586,9 +586,12 @@ async def check_command(ctx):
 
 def check_raw_command(command, data, loop, **info):
 
-    ctx = LazyCtx(command, **data)
+    # open()
+
+    ctx = LazyCtx(command, **info)
 
     return asyncio.run_coroutine_threadsafe(
         check_command(ctx),
         loop
     ).result()
+
